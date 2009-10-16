@@ -1,0 +1,9 @@
+The directories 'Ansiterm' 'CW' 'FT817' and 'Plan13' should 
+be installed in your Arduino libraries directory, which usually
+appears alongside your sketches.
+
+Upon restarting the Arduino IDE, the example sketches provided for 
+each of these libraries should be available under 'File/Examples'.
+Some of these libraries have external dependencies. A simple google
+search should find the needed library, which should also be installed
+in your 'libraries' directory. 
