@@ -230,7 +230,7 @@ void Plan13::satvec(void)
      D = (EA - EC * S - M) / DNOM; /* Change EA to better resolution    */
      EA = EA - D;                    /* by this amount until converged    */
   }
-  while (abs(D) > 1.0E-5);
+  while (fabs(D) > 1.0E-5);
 
    /* Distances */
   A = A0 * KD;
