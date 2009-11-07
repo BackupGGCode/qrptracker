@@ -16,8 +16,9 @@
 #define ONEPPM 1.0e-6
 #define TIME_MSG_LEN  11   // time sync to PC is HEADER followed by unix time_t as ten ascii digits
 #define TIME_HEADER  '@'   // Header tag for serial time sync message
-#define DEBUG true
-#define QRP   false
+#define SAT_NO 0
+#define DEBUG false
+#define QRP   true
 Plan13 p13;
 TleEEPROM te = TleEEPROM();
 Ansiterm ansi;
@@ -51,6 +52,7 @@ int rectangles[][4] = {
   void powerSaveSetup() {
   power_spi_disable();
   power_twi_disable();
+  power_usart0_disable();
   MCUSR &= ~(1<<WDRF);
   cli();
   WDTCSR |= (1<<WDCE) | (1<<WDE);
@@ -63,11 +65,14 @@ int rectangles[][4] = {
  
     pinMode(13, OUTPUT); 
     Serial.begin(57600);
-    if (QRP) {
+    initTime();
+     if (QRP) {
        powerSaveSetup();
     }
-    initTime();
-     
+    if (!QRP) {
+    Serial.print("Satellite tracked: ");
+    Serial.println(te.getTle(SAT_NO).name);
+    }
     //these shouldnt matter
     p13.setFrequency(435300000, 1459200000);//AO-51  frequency
     p13.setLocation(-64.375, 45.8958); // Sackville, NB
@@ -76,19 +81,24 @@ int rectangles[][4] = {
   }
   void loop() {
     if (DateTime.available()) {
-      readElements(6);//this has to be here because the numbers get destroyed 
+      readElements(SAT_NO);//this has to be here because the numbers get destroyed 
     p13.setTime(DateTime.Year+1900, DateTime.Month+1, DateTime.Day, DateTime.Hour, DateTime.Minute, DateTime.Second); 
     if (DEBUG) {reportTime();}
     p13.initSat();
     p13.satvec();
     p13.rangevec(); 
+   if (!QRP) {
     Serial.print("Lat: ");
     Serial.println(p13.SLAT);
     Serial.print("Long: ");
     Serial.println(p13.SLON);
+   }
     if (inRects(p13.SLAT,p13.SLON)) {
+    if (!QRP) {
       Serial.print("H");
+    }    
       digitalWrite(13,HIGH);
+    
     }
     else {digitalWrite(13,LOW);}
     if (QRP) {delay(3);
@@ -161,7 +171,7 @@ int rectangles[][4] = {
 
   boolean inRects(int lat, int lon) {
     for (int x = 0; x < numberOfRects; x++) {
-        Serial.print("Lat bounds: ");
+        if (!QRP) {Serial.print("Lat bounds: ");
         Serial.print(rectangles[x][X1]);
         Serial.print(" ");
         Serial.println(rectangles[x][X2]);
@@ -170,9 +180,12 @@ int rectangles[][4] = {
         Serial.print(" ");
         Serial.println(rectangles[x][Y2]);
         Serial.println("###");
+        }
       if (lat > (float) rectangles[x][X1] && lat < (float) rectangles[x][X2] 
         && lon > (float) rectangles[x][Y1] && lon < (float) rectangles[x][Y2]) {
-          Serial.print("INSIDE");
+         if (!QRP) {
+           Serial.print("INSIDE");
+         }
           return true;
           
         } 
