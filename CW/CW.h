@@ -8,8 +8,8 @@ typedef void (*signalFunction)(void);
 class CW
 {
 	public:
-		CW();
-		CW(signalFunction callbackOn, signalFunction callbackOff, int _dit_in);
+	//	CW();
+	//	CW(signalFunction callbackOn, signalFunction callbackOff, int _dit_in);
 		CW( signalFunction signalOn, signalFunction signalOff, byte wpm);
 		void signalChars(char in[]);
 		void signalChar(char in);
