@@ -25,7 +25,7 @@ Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 The latest version of this software is available at
 */
-#include "WProgram.h"
+//#include "WProgram.h"
 #include "CW.h"
 #define  SPEED_FACTOR 2500
 #define UPPER_SPEED_LIMIT 50
@@ -345,12 +345,13 @@ void CW::signalChar(char character)
 			dit();
 			dah();
 			break;
-		case '-':
-			dah();
-			dit();
+		case '?':
 			dit();
 			dit();
 			dah();
+			dah();
+			dit();
+			dit();
 			break;
 	}
 	interChar();
