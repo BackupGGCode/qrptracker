@@ -85,7 +85,7 @@ void Plan13::initSat(void)
    if (DEBUG) {Serial.println("Start initSat()");}
   LA = rad( observer_lat );
   LO = rad( observer_lon );
-  HT = 20.0 / 1000.0;
+  HT = observer_height; //20.0 / 1000.0;
 
   CL = cos(LA);
   SL = sin(LA);
@@ -335,6 +335,7 @@ txOutLong = txFrequencyLong + txDoppler;
 
 void Plan13::sunvec(void)
 {
+	//TODO
 }
 
 
@@ -384,22 +385,15 @@ void Plan13::setFrequency(unsigned long rxFrequency_in, unsigned long txFrequenc
 		txFrequencyLong = 45920000L;
 	}
 }
-/*
-void Plan13::setFrequency(unsigned long rxFrequency_in, double txFrequency_in) {
-	rxFrequency = rxFrequency_in; //435300000.0;
-	txFrequency = txFrequency_in; //145920000.0;
-	if (TEST) {
-		rxFrequency = 435300000.0;
-		txFrequency = 45920000.0;
-	}
-}
-*/
-void Plan13::setLocation(double observer_lon_in, double observer_lat_in) {
+
+void Plan13::setLocation(double observer_lon_in, double observer_lat_in, int height) {
 	observer_lon = observer_lon_in;//-64.375; //0.06; // lon east is positive, west is negative
 	observer_lat = observer_lat_in;//45.8958; //52.21; //Cambridge UK
+	observer_height = height; //60m height in meters
 	if (TEST) {
 		observer_lon = -64.375;
 		observer_lat = 45.8958;
+		observer_height = 60;
 	}
 }
 
@@ -414,12 +408,12 @@ void Plan13::setTime(int yearIn, int monthIn, int mDayIn, int hourIn, int minIn,
      int aMin  = minIn;
      int aSec  = secIn;
     if (TEST) {
-    aYear = 2009; //RTC.get(DS1307_YR,true);
-    aMonth = 10;//RTC.get(DS1307_MTH,false);
-   aMday = 1; //RTC.get(DS1307_DATE,false);
-     aHour = 19; //RTC.get(DS1307_HR,true);
-     aMin = 5;//RTC.get(DS1307_MIN,false);
-    aSec = 0;//RTC.get(DS1307_SEC,false);
+    aYear = 2009; 
+    aMonth = 10;
+   aMday = 1; 
+     aHour = 19; 
+     aMin = 5;
+    aSec = 0;
     }
 
      DN = FNday(aYear, aMonth, aMday);
@@ -477,11 +471,10 @@ void Plan13::setTime(int yearIn, int monthIn, int mDayIn, int hourIn, int minIn,
   }
 
 }
-/*
-  void  Plan13::process() {
+
+  void  Plan13::calculate() {
 		initSat();
 		satvec();
 		rangevec();
-		printdata();
    }
-*/
+

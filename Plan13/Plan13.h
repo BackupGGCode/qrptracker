@@ -16,9 +16,10 @@ void initSat(void);
 void satvec(void);
 void rangevec(void);
 void sunvec(void);
+void calculate(void);
 void printdata(void);
 void setFrequency(unsigned long rx_frequency, unsigned long tx_frequency);
-void setLocation(double lon, double lat);
+void setLocation(double lon, double lat, int height);
 void setTime(int yearIn, int monthIn, int mDayIn, int hourIn, int minIn, int secIn);
 void setElements(double YE_in, double TE_in, double IN_in, double 
          RA_in, double EC_in, double WP_in, double MA_in, double MM_in, 
@@ -27,6 +28,7 @@ void setElements(double YE_in, double TE_in, double IN_in, double
 double rx, tx;
 double observer_lon;
 double observer_lat;
+int observer_height;
 unsigned long rxOutLong;
 unsigned long txOutLong;
 unsigned long rxFrequencyLong;
