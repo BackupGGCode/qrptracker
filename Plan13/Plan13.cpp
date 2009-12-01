@@ -91,10 +91,13 @@ void Plan13::initSat(void)
   SL = sin(LA);
   CO = cos(LO);
   SO = sin(LO);
+  /* WGS-84 Earth Ellipsoid */
+ RE = 6378.137;
+ FL = 1.0 / 298.257224;
 
    /* IAU-76 Earth Ellipsoid */
-  RE = 6378.140;
-  FL = 1.0 / 298.257;
+ // RE = 6378.140;
+ // FL = 1.0 / 298.257;
 
   RP = RE * (1.0 - FL);
   XX = RE * RE;
@@ -167,19 +170,21 @@ void Plan13::initSat(void)
 
    /* Sideral and solar data. Never needs changing. Valid to year 2000+ */
 
-   /* GHAA, Year YG, Jan 0.0 */
-  YG = 1990;
-  G0 = 99.4033;
-   /* MA Sun and rate, deg, deg/day */
-  MAS0 = 356.6349;
-  MASD = 0.98560027;
-   /* Sun's inclination */
-  INS = rad(23.4406);
-  CNS = cos(INS);
-  SNS = sin(INS);
-   /* Sun's equation of center terms */
-  EQC1 = 0.033431;
-  EQC2 = 0.00034;
+
+               /* GHAA, Year YG, Jan 0.0 */
+ YG = 2010;
+ G0 = 99.5578;
+  /* MA Sun and rate, deg, deg/day */
+ MAS0 = 356.4485;
+ MASD = 0.98560028;
+  /* Sun's inclination */
+ INS = rad(23.4380);
+ CNS = cos(INS);
+ SNS = sin(INS);
+  /* Sun's equation of center terms */
+ EQC1 = 0.03341;
+ EQC2 = 0.00035;
+
 
    /* Bring Sun data to satellite epoch */
   TEG = (DE - FNday(YG, 1, 0)) + TE;  /* Elapsed Time: Epoch - YG          */
