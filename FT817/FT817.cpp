@@ -2,7 +2,7 @@
 #include "FT817.h"
 #include <../NewSoftSerial/NewSoftSerial.h>
 #define DEBUG false
-extern NewSoftSerial rigSoftSerial(2,3);
+extern NewSoftSerial rigSoftSerial(16,17);
 
 FT817::FT817()
 {
@@ -17,11 +17,35 @@ void FT817::assignSerial(NewSoftSerial s) {
 
 void FT817::begin(int baud) {
   rigSoftSerial.begin(baud);
-      sendCATCommandChar(FT817_ANY_BYTE);
-    sendCATCommandChar(FT817_ANY_BYTE);
-    sendCATCommandChar(FT817_ANY_BYTE);
-    sendCATCommandChar(FT817_ANY_BYTE);
-    sendCATCommandChar(0x80);
+
+}
+
+void FT817::setLockOff() {
+	  simpleCommand(0x80);
+}
+void FT817::setCTCSSEncoderOn() {
+	sendCATCommandChar(FT817_CTCSS_ENCODER_ON);
+	threeBytePreamble();
+	sendCATCommandChar(FT817_SET_CTCSS);
+	readOneChar();
+}
+
+void FT817::setCTCSSOff() {
+	sendCATCommandChar(FT817_CTCSS_OFF);
+	threeBytePreamble();
+	sendCATCommandChar(FT817_SET_CTCSS);
+	readOneChar();
+}
+
+void FT817::setCTCSSFreq(unsigned int freq) {
+	byte freq_bcd[2];
+	to_bcd_be(freq_bcd, (long)  freq, 4);
+	sendCATCommandChar(freq_bcd[0]);
+	sendCATCommandChar(freq_bcd[1]);
+	sendCATCommandChar(FT817_ANY_BYTE);
+	sendCATCommandChar(FT817_ANY_BYTE);
+	sendCATCommandChar(FT817_SET_CTCSS_FREQ);
+	readOneChar();
 }
 
 void FT817::verifiedSetFreq(unsigned long freq) {
@@ -62,10 +86,9 @@ void FT817::setMode(byte mode) {
   		//Serial.print(mode, BYTE);
   	}
     sendCATCommandChar(mode);
-    sendCATCommandChar(FT817_ANY_BYTE);
-    sendCATCommandChar(FT817_ANY_BYTE);
-    sendCATCommandChar(FT817_ANY_BYTE);
+    threeBytePreamble();
     sendCATCommandChar(FT817_MODE_SET);
+    readOneChar();
   }
 }
 
@@ -76,7 +99,7 @@ byte FT817::getMode() {
   
 boolean FT817::setFreqTest(unsigned long freq) {
   setFreq(freq);
-  
+  //delay(100);
   unsigned long freqOut = getFreqMode();
   if (freqOut == freq) {
 
@@ -86,40 +109,51 @@ boolean FT817::setFreqTest(unsigned long freq) {
    return true;
   }
   else { 
+  	  if (DEBUG) {
   	    Serial.print("sent in: ");
-  	    Serial.println(freq);
+  	    Serial.print(freq);
   	    Serial.print("got out: ");
   	    Serial.println(freqOut);
-  	    rigComError("failed setfreqtest");
+  	  }
+  	   // rigComError("failed setfreqtest");
          return false;
   }
 }
 
 void FT817::setFreq(long freq) {
-	unsigned char foo[4];
+		unsigned char foo[4];
        // char bar[] = {0x11, 0x22};
   out = to_bcd_be(foo, freq, 8);
   sendCATCommandArray(out, 4);
-   sendCATCommandChar(FT817_FREQ_SET);
-   delay(175);
+  sendCATCommandChar(FT817_FREQ_SET);
+  readOneChar();
 }
 
 
 unsigned long FT817::getFreqMode() {
-  rigSoftSerial.flush();// not sure why I have to do this.
+  //rigSoftSerial.flush();// not sure why I have to do this.
   //check for data after setFreq
   boolean readValid = true;
-  sendCATCommandChar(FT817_ANY_BYTE);
-  sendCATCommandChar(FT817_ANY_BYTE);
-  sendCATCommandChar(FT817_ANY_BYTE);
-  sendCATCommandChar(FT817_ANY_BYTE);
+  fourBytePreamble();
   sendCATCommandChar(FT817_FREQMODE_READ);
   byte chars[4];
-    delay(50);
   if  (DEBUG) {Serial.print(0xBB, BYTE);}
+     long timeout = millis();
+     long elapsed = 0;
+      while (rigSoftSerial.available() < 5 && elapsed < 2000) {
+      	elapsed = millis() - timeout;
+     	;}
+  if (elapsed > 2000) {
+  	if (DEBUG) {Serial.println("timeout on getfreqMode");}
+  }
+  else {
+  	if (DEBUG) {
+  	Serial.print("getfreQMode took: ");
+  	Serial.println(elapsed);
+  	}
+  }
   for (int i = 0; i < 4; i++) {
-     chars[i] = rigSoftSerial.read();  
-    // delay(100);
+     	chars[i] = rigSoftSerial.read();  
    
      if(chars[i] > 0x99) {
 	//  readValid = false;  // if any character is bad then the whole string is bad
@@ -144,6 +178,30 @@ unsigned long FT817::getFreqMode() {
 //}
 }
 
+char FT817::readOneChar() {
+	unsigned long startTime = millis();
+	while (rigSoftSerial.available() < 1 && millis() < startTime + 2000) {
+		;
+	}
+	if (millis() > startTime + 2000L) {
+		if (DEBUG) {
+			Serial.println("timeout");
+			}
+	//	return 0;
+	}
+	else {
+	byte b = rigSoftSerial.read();
+	if (DEBUG) {
+	Serial.print("read char: " );
+	Serial.print((int)b);
+	Serial.print(" after ");
+	Serial.println(millis()- startTime);
+	}
+	return b;
+	}
+	
+}
+
 void FT817::sendCATCommandChar(int command) {
 	if (DEBUG) {
 		Serial.print(command, BYTE);
@@ -158,6 +216,83 @@ void FT817::sendCATCommandArray(  byte command[], int len) {
 	}
     rigSoftSerial.print(command[x], BYTE);
   }
+}
+
+void FT817::fourBytePreamble() {
+	 sendCATCommandChar(FT817_ANY_BYTE);
+     threeBytePreamble();
+}
+
+void FT817::threeBytePreamble() {
+  sendCATCommandChar(FT817_ANY_BYTE);
+  sendCATCommandChar(FT817_ANY_BYTE);
+  sendCATCommandChar(FT817_ANY_BYTE);
+}
+
+void FT817::flush() {
+	rigSoftSerial.flush();
+}
+void FT817::off() {
+	simpleCommand(FT817_OFF);
+}
+
+void FT817::on() {
+	fourBytePreamble();
+	sendCATCommandChar(FT817_ANY_BYTE);
+	simpleCommand(FT817_ON);
+}
+
+void FT817::setSplitModeOn() {
+	simpleCommand(FT817_SPLITMODE_ON);
+}
+
+
+void FT817::setSplitModeOff() {
+     simpleCommand(FT817_SPLITMODE_OFF);
+}
+
+void FT817::switchVFO() {
+     simpleCommand(FT817_VFOMODE);
+}
+
+void FT817::setPTTOff() {
+	//Serial.print("Ptt off: ");
+	simpleCommand(FT817_PTT_OFF);
+}
+
+void FT817::setPTTOn() {
+	simpleCommand(FT817_PTT_ON);
+}
+
+boolean FT817::txState() {
+	fourBytePreamble();
+	sendCATCommandChar(FT817_READ_TX_STATE);
+	byte b = readOneChar();
+	
+	if (b == 0) {
+		return false;
+	}
+	else {
+		return true;
+	}
+}
+
+boolean FT817::txState2() {
+	fourBytePreamble();
+	sendCATCommandChar(FT817_READ_TX_STATE2);
+	byte b = readOneChar();
+	if (b == FT817_NOPTT) {
+		return false;
+	}
+	else {
+		return true;
+	}
+}
+
+void FT817::simpleCommand(int command) {
+	fourBytePreamble();
+	sendCATCommandChar(command);
+	readOneChar();
 }
 
 //Protected under gpl
