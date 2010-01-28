@@ -1,6 +1,6 @@
 #include <TleStoreCallback.h>
 #include <avr/eeprom.h>
-
+#define WRITE_DELAY
 void write(int address, uint8_t value)
 {
 	eeprom_write_byte((unsigned char *) address, value);
@@ -13,7 +13,7 @@ uint8_t read(int address)
 
 readCallback in = &read;
 writeCallback out = &write;
-TleStoreCallback te(in, out);
+TleStoreCallback te(in, out, 50);
 
 void setup() {
   pinMode(13, OUTPUT); 

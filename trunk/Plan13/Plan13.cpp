@@ -85,8 +85,7 @@ void Plan13::initSat(void)
    if (DEBUG) {Serial.println("Start initSat()");}
   LA = rad( observer_lat );
   LO = rad( observer_lon );
-  HT = observer_height; //20.0 / 1000.0;
-
+  HT = ((float) observer_height)/1000.0; // this needs to be in km
   CL = cos(LA);
   SL = sin(LA);
   CO = cos(LO);
@@ -482,4 +481,30 @@ void Plan13::setTime(int yearIn, int monthIn, int mDayIn, int hourIn, int minIn,
 		satvec();
 		rangevec();
    }
+
+float  *Plan13::footprintOctagon(float slat, float slon) {
+	static float points[16];
+	float srad = acos(RE/RS);
+	float cla= cos(slat);
+	float sla = sin(slat);
+	float clo = cos(slon);
+	float slo = sin(slon);
+	float sra = sin(srad);
+	float cra = cos(srad);
+	for (int i = 0; i < 16; i = i +2) {
+		float a = 2 * M_PI * i / 8;
+		float X = cra;
+		float Y = sra*sin(a);
+		float Z = sra*cos(a);
+		float x = X*cla - Z*sla;
+		float y = Y;
+		float z = X*sla + Z*cla;
+		X = x*clo - y*slo;
+		Y = x*slo + y*clo;
+		Z = z; 
+		points[i] = FNatn(Y,X);
+		points[i+1] = asin(Z);	
+	}
+	return points;
+}
 

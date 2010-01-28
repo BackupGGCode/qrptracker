@@ -17,6 +17,7 @@ void satvec(void);
 void rangevec(void);
 void sunvec(void);
 void calculate(void);
+float *footprintOctagon(float slat, float slon);
 void printdata(void);
 void setFrequency(unsigned long rx_frequency, unsigned long tx_frequency);
 void setLocation(double lon, double lat, int height);
