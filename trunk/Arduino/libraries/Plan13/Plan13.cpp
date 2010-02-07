@@ -327,9 +327,9 @@ void Plan13::rangevec(void)
    /* Resolve Sat-Obs velocity vector along unit range vector. (VOz = 0) */
   RR = (Vx - VOx) * Rx + (Vy - VOy) * Ry + Vz * Rz; /* Range rate, km/sec */
   //FR = rxFrequency * (1 - RR / 299792);
-float factor = RR / 299792.0;
-int rxDoppler = getDoppler(rxFrequencyLong,factor);
-int txDoppler = getDoppler(txFrequencyLong,factor);
+dopplerFactor = RR / 299792.0;
+int rxDoppler = getDoppler(rxFrequencyLong);
+int txDoppler = getDoppler(txFrequencyLong);
 rxOutLong = rxFrequencyLong - rxDoppler;
 txOutLong = txFrequencyLong + txDoppler;
 
@@ -343,9 +343,9 @@ void Plan13::sunvec(void)
 }
 
 
-int Plan13::getDoppler(unsigned long freq, float factorIn) {
+int Plan13::getDoppler(unsigned long freq) {
   freq = (freq + 50000L) / 100000L;
-  long factor = factorIn * 1E11;
+  long factor = dopplerFactor * 1E11;
   int digit;
   float tally = 0;
   for (int x = 4; x > -1; x--) {
@@ -358,7 +358,11 @@ int Plan13::getDoppler(unsigned long freq, float factorIn) {
 return int( tally + .5); //round
 }
 
-
+int Plan13::getDoppler64(unsigned long freq) {
+	long factor = dopplerFactor * 1E11;
+	uint64_t doppler_sixfour = freq * dopplerFactor;
+	return (int) doppler_sixfour/1E11;
+}
 void Plan13::printdata(void)
 {
 

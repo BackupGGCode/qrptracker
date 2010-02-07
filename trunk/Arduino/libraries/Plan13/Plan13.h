@@ -25,7 +25,9 @@ void setTime(int yearIn, int monthIn, int mDayIn, int hourIn, int minIn, int sec
 void setElements(double YE_in, double TE_in, double IN_in, double 
          RA_in, double EC_in, double WP_in, double MA_in, double MM_in, 
 		double M2_in, double RV_in, double ALON_in );
-	int getDoppler(unsigned long freq, float factor);
+	int getDoppler(unsigned long freq);
+	int getDoppler64(unsigned long freq);
+
 double rx, tx;
 double observer_lon;
 double observer_lat;
@@ -34,7 +36,7 @@ unsigned long rxOutLong;
 unsigned long txOutLong;
 unsigned long rxFrequencyLong;
 unsigned long txFrequencyLong;
-
+float dopplerFactor;
 const static double   YM = 365.25;                           /* Days in a year                     */
 double   EL;                           /* Elevation                          */
 double   TN;                           /*                                    */
