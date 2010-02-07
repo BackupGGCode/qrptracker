@@ -119,7 +119,9 @@ unsigned int currentSatAddress;
 byte numberOfModelines;
 int freqDiff;
 byte buttonCounter = 0;
-
+unsigned long downlinkTransmitted;
+unsigned long uplinkReceived;
+unsigned long uplinkTransmitted;
 void doOn() {
   analogWrite(SPEAKER_PIN, 300);
 }
@@ -142,7 +144,7 @@ CW cw(onPointer, offPointer, byte(45));
 byte modelineNumber = 0;
 byte currentBird = 255;
 boolean activeTracking = false;
-unsigned long previousUplinkFreq = 0;
+unsigned long previousUplinkTransmittedDiv10 = 0;
 void setup() {
 
 #if USE_GPS
@@ -184,6 +186,7 @@ p13.setLocation(-64.375, 45.8958, 60); // Sackville, NB
 }
 
 void loop() {  
+  boolean isTransmitting = rig.txState2();
   digitalWrite(GREEN_LED_PIN, activeTracking);//led tells us if 
   //we are tracking
   unsigned long foo = millis();
@@ -237,6 +240,8 @@ void loop() {
   ansi.xy(1,2);
   if (changeModeline) {
     currentModeline = te.getModelineForAddress(te.getModelineStart(currentSatAddress, modelineNumber));
+    downlinkTransmitted = currentModeline.dlLong;
+    uplinkReceived = currentModeline.ulLong; 
     if (activeTracking) {
       cw.signalChars(currentModeline.modeName);
     }
@@ -255,35 +260,42 @@ void loop() {
   assignTimeToP13();
 #endif
   assignTleStructToP13(currentTle);
+
+  //only allow hand tuning if not FM mode
+  if (!changeModeline && activeTracking && currentModeline.dlMode != FM && currentModeline.dlMode != FMN) {
+    freqDiff =   rig.getFreqMode() - (p13.rxOutLong +5)/10;
+    if (freqDiff != 0) {
+      downlinkTransmitted += (freqDiff);
 #if DEBUGME
   ansi.xy(1,8);
   Serial.print("Diff ");
   Serial.print(freqDiff);
   Serial.print("    ");
+  Serial.print(downlinkTransmitted);
 #endif
-  //only allow hand tuning if not FM mode
-  if (!changeModeline && activeTracking && currentModeline.dlMode != FM && currentModeline.dlMode != FMN) {
-    freqDiff =   rig.getFreqMode() - (p13.rxOutLong +5)/10;
-    if (freqDiff != 0) {
+      freqDiff = 0; 
       freqShift = true;
+    }
+    /*
 #if DEBUGME
       ansi.xy(1,9);
       ansi.xy(1,8);
-      Serial.print("  First Diff: ");
+      Serial.print("Diff: ");
       Serial.print(freqDiff);
       Serial.print("            ");
 #endif
-      currentModeline.dlLong += freqDiff*10;
-      if (currentModeline.ulLong != 0) {
+*/
+//currentModeline was used as scratchpad for values *at satellite*
+      if (currentModeline.ulLong != 0  ) {
         if (currentModeline.polarity == NOR) {
-          currentModeline.ulLong += (freqDiff);
+          uplinkReceived = (downlinkTransmitted - currentModeline.dlLong) + currentModeline.ulLong;
         }
         else if (currentModeline.polarity == REV) {
-          currentModeline.ulLong -= freqDiff;
+          uplinkReceived = (currentModeline.dlLong - downlinkTransmitted) + currentModeline.ulLong;
         }
       }
-      freqDiff = 0; 
-    }
+  
+
   }// end check that this isn't FM
 
 #if DEBUGME
@@ -291,7 +303,7 @@ void loop() {
   // Serial.print("dlLong: ");
   // Serial.print(currentModeline.dlLong);
 #endif
-  p13.setFrequency(currentModeline.dlLong, currentModeline.ulLong);
+  p13.setFrequency(downlinkTransmitted, uplinkReceived);
   p13.calculate();
 #if DEBUGME
   ansi.xy(1,10);
@@ -303,14 +315,31 @@ void loop() {
   Serial.println(p13.EL);
   ansi.xy(1,6);
   Serial.print("Rx ");
-  Serial.println(p13.rxOutLong);
-  Serial.print(" Tx: ");
+  Serial.print(p13.rxOutLong);
+  Serial.print(" ");
+  long diffA = p13.rxOutLong - downlinkTransmitted;
+  Serial.print(diffA);
+  Serial.print(" ");
+  Serial.print(downlinkTransmitted);
+  Serial.println("                         ");
+  Serial.print("Tx ");
   if ( currentModeline.ulLong != 0) {
-    Serial.println(p13.txOutLong);
+    Serial.print(p13.txOutLong);
+    Serial.print(" ");
+    diffA = p13.txOutLong - uplinkReceived;
+    Serial.print(diffA);
+    Serial.print("                       ");
   }
   else {
-    //ansi.setForegroundColor(RED);
     Serial.println("n/a          ");
+  }
+  ansi.xy(1,9);
+  Serial.print("freqShift: ");
+  if (freqShift) {
+  Serial.println("t");
+  }
+  else {
+    Serial.println("f");
   }
 #endif
   if (p13.EL > MIN_ELEVATION) {//this bird is above the horizon
@@ -331,7 +360,7 @@ void loop() {
 #endif 
     if (!activeTracking || changeModeline) {
       //bird is up *and* we are not actively tracking, so this is a new bird for us
-      previousUplinkFreq = 0;
+      previousUplinkTransmittedDiv10 = 0;
       if (TURN_OFF_RIG) {
         rig.on();
         rig.on();
@@ -352,15 +381,15 @@ void loop() {
       }
 
     }//end if !activeTracking
-    if (!rig.txState2() && !freqShift) {  // we are receiving and the sat is up      should we also check for !freqShift?
+    if (!isTransmitting && !freqShift) {  // we are receiving and the sat is up      should we also check for !freqShift?
       long currentDownlinkFreq = (p13.rxOutLong + 5) / 10;
 #if DEBUGME
       ansi.xy(1,11);
       //move in case there is an error message
 #endif
       rig.setFreqTest(currentDownlinkFreq);
-      long currentUplinkFreq = (p13.txOutLong + 5)/ 10;
-      long delta = abs(currentUplinkFreq - previousUplinkFreq);
+      long currentUplinkTransmittedDiv10 = (p13.txOutLong + 5)/ 10;
+      long delta = abs(currentUplinkTransmittedDiv10 - previousUplinkTransmittedDiv10);
       boolean match = (
       ((currentModeline.ulMode == FMN || currentModeline.ulMode == PKT || currentModeline.ulMode == FM) && delta > FM_DELTA_TRIGGER) || 
         ((currentModeline.ulMode == USB || currentModeline.ulMode == LSB || currentModeline.ulMode == CWMODE) && delta > LINEAR_DELTA_TRIGGER)
@@ -377,14 +406,14 @@ void loop() {
         ansi.xy(1,11);
         //move in case there is an error message
 #endif       
-        rig.setFreqTest(currentUplinkFreq);
+        rig.setFreqTest(currentUplinkTransmittedDiv10);
         rig.switchVFO();//go to the receive side again
 #if DEBUGME
         ansi.xy(1,4);
         Serial.print(" ");
         ansi.xy(1,11);
 #endif
-        previousUplinkFreq = currentUplinkFreq;
+        previousUplinkTransmittedDiv10 = currentUplinkTransmittedDiv10;
         //store this so that we know how much things have changed, and
         //will only alter the uplink frequency when beyond our tolerance
       }
@@ -420,7 +449,7 @@ void loop() {
       cw.signalChars("qrt");
       //   Not sure if we can afford this
 
-        if (currentModeline.dlLong > 0) {
+        if (currentModeline.ulLong > 0) {
         
 
         setMode(rig,FM);
@@ -467,10 +496,6 @@ void signalBirdPosition(float az, float el) {
     elChar = 'H';
   }  
   unsigned int azInt = az * 100;
-  ansi.xy(1,2);
-  Serial.print(az);
-  Serial.print("  ");
-  Serial.print(azInt);
   if (0 <= azInt && azInt < 1125) { 
     azString = "N";
   }
@@ -519,7 +544,7 @@ void signalBirdPosition(float az, float el) {
   else if (32625 <= azInt && azInt < 34875) {
     azString = "NNW";
   }
-  else if (34875 <= azInt && azInt < 0) {
+  else if (34876 <= azInt ) {
     azString = "N";
   }
   cw.signalChars(azString);
@@ -647,7 +672,7 @@ void i2c_eeprom_write_byte( int deviceaddress, unsigned int eeaddress, byte data
 void selfTest() {
   // if you're running the console, you don't need this,
   // and you'll need the programming space
-//#if !DEBUGME
+#if !DEBUGME
   //Is the clock working?
   cw.signalChars("Time");
   if (RTC.get(DS1307_YR,true) > 2009) {
@@ -666,7 +691,7 @@ void selfTest() {
     cw.signalChars(te.getTle(x).name);
     morseSpace();
   }
-//#endif
+#endif
 }
 
 void morseSpace() {
@@ -695,16 +720,7 @@ void tryToGetTles() {
   //  cw.signalChars("TLE?");
   te.greeting();
 
-  unsigned long serialTimeout = millis();
-  boolean pin = false;
-  while ((Serial.available() < 1) && ((serialTimeout + 5000) > millis()))
-  {
-    pin = !pin;
-    digitalWrite(GREEN_LED_PIN,pin);
-    digitalWrite(RED_LED_PIN,!pin);
-    delay(1000);
-  }
-  // cw.signalChars(".");
+  delay(500);
   if (Serial.read() == 'R') {
     setTime();
     //we need something in here to negotiate if the burner
@@ -750,6 +766,7 @@ char atoi_ones(char in) {
 char atoi_tens(char in) {
   return atoi_ones(in) * 10;
 }
+
 
 
 
