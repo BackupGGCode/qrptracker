@@ -1,0 +1,30 @@
+This ruby code provides a gui that loads TLEs into hardware running
+the satpack code. It will also sync the realtime clock on board the 
+satpack hardware. 
+
+This code requires the following ruby libraries be installed:
+open-uri
+tempfile
+serialport
+wx
+
+You can run 'gem install PACKAGENAME' to install these. On MacOS and Linux
+you might want to do so as root using 'sudo gem install PACKAGENAME' For
+some reason, wx is in a gem called 'wxruby'.
+
+In addition, this code requires that the 'avrdude' commandline program
+be installed, since it uses this to access the EEPROM on board the 
+microcontroller. The easiest way to get this is to ensure you have an 
+Arduino IDE installed, since it includes avrdude.
+
+'serialport' is difficult to install on Win32 systems. I have included
+instructions on my blog at http://ve9qrp.blogspot.com/2009/12/ruby-serialport-on-win32.html
+This is enough of a hassle, that I intend to compile binaries on Win32.
+
+On MacOS, the drag-and-drop code does not properly work, at least in my 
+hand-compiled code for Snow Leopard and Ruby 1.8.6. I'm going to wait for
+wxRuby 2.1 and Ruby 1.9 before I start to worry.
+
+
+
+
