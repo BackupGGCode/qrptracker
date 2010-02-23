@@ -96,9 +96,9 @@ void TleStoreCallback::readTLE() {
       
     }
    
-
-  numberOfTles = ((header[0] << 0) & 0xFF) + ((header[1] << 8) & 0xFF00);
-  numberOfModelines = ((header[2] << 0) & 0xFF) + ((header[3] << 8) & 0xFF00);
+  readHeader();
+  //numberOfTles = ((header[0] << 0) & 0xFF) + ((header[1] << 8) & 0xFF00);
+  //numberOfModelines = ((header[2] << 0) & 0xFF) + ((header[3] << 8) & 0xFF00);
   unsigned int tleBytes = TLE_RECORD_SIZE * numberOfTles;
   char in;
   for (unsigned int x = 0; x < tleBytes; x++) {
@@ -134,16 +134,34 @@ void TleStoreCallback::echoWriteChar(unsigned int address, char in) {
   delay(10);
 }
 
-void TleStoreCallback::dumpStore() {
-  Serial.flush();
-  Serial.print("Number of TLEs: " ); 
-  int numberOfTles = ((read(0) << 0) & 0xFF) + ((read(1) << 8) & 0xFF00);
-  int numberOfModelines = ((read(2) << 0) & 0xFF) + ((read(3) << 8) & 0xFF00);
-  Serial.print(numberOfTles);
+byte TleStoreCallback::getVersion() {
+	return read(0);
+}
 
+float TleStoreCallback::getLatitude() {
+	float latitude;
+	readAnything(1,latitude);
+	return latitude;
+}
+
+float TleStoreCallback::getLongitude() {
+	float longitude;
+	readAnything(5,longitude);
+	return longitude;
+}
+
+unsigned int TleStoreCallback::getAltitude() {
+	unsigned int altitude;
+	readAnything (9,altitude);
+	return altitude;
+}
+
+void TleStoreCallback::dumpStore() {
+  readHeader();
+  Serial.print("Number of TLEs: " ); ;
+  Serial.print(numberOfTles);
   Serial.print("Number of Modelines: ");
   Serial.println(numberOfModelines);
-
   Serial.println("------------");
   for (int i = 0; i < 512; i++) {
     Serial.print((int) read(i));
@@ -152,7 +170,7 @@ void TleStoreCallback::dumpStore() {
 
 }
 
-struct tleStruct TleStoreCallback::getTle(int place) {
+struct tleStruct TleStoreCallback::getTle(byte place) {
 	struct tleStruct s;
 	readAnything(HEADER_SIZE + place * TLE_RECORD_SIZE,s.name);
 	readAnything(HEADER_SIZE + 6 +  place *  TLE_RECORD_SIZE, s.YE);
@@ -168,14 +186,83 @@ struct tleStruct TleStoreCallback::getTle(int place) {
 	return s;
 }
 
-unsigned int TleStoreCallback::getSatAddress(int rank) {
+unsigned int TleStoreCallback::getSatAddress(byte rank) {
 	return HEADER_SIZE + TLE_RECORD_SIZE * rank;
 }
 
+/*
 struct modelineStruct TleStoreCallback::getModelineForSatNumber(int rank) {
 	return getModeline(getSatAddress(rank));
 }
+*/
+byte TleStoreCallback::countModelinesForTle(unsigned int tleAddress) {
+	unsigned int modelineStart = HEADER_SIZE + TLE_RECORD_SIZE * numberOfTles;
+	unsigned int satAddress;
+    int modelineCounter = 0;
+	for (int i = 0; i < numberOfModelines; i++) {
+		int currentModelineAddress = modelineStart + i * MODELINE_RECORD_SIZE;
+	    readAnything(modelineStart + i * MODELINE_RECORD_SIZE,satAddress);
+	    if (satAddress == tleAddress) {
+			modelineCounter++;
+		}
+	}
+	return modelineCounter;
+} 
 
+/*Returns EEPROM address of the modelineRank-th modeline for the satellite at tleAddress
+
+*/
+
+ unsigned int  TleStoreCallback::getModelineStart(unsigned int tleAddress, byte modelineRank) {
+		unsigned int modelinesStart = HEADER_SIZE + TLE_RECORD_SIZE * numberOfTles;
+		unsigned int currentModelineStart;
+		unsigned int satAddress;
+		byte modelineCounter = 0;
+		/*
+		Serial.print("TLE address: ");
+		Serial.println(tleAddress);
+		Serial.print("modeline#s: ");
+		Serial.println(numberOfModelines);
+		*/
+		// find the first modeline that pertains
+		for (int i = 0; i < numberOfModelines; i++) {
+		    currentModelineStart = modelinesStart + i * MODELINE_RECORD_SIZE;
+		    readAnything(currentModelineStart,satAddress);
+		    /*Serial.print(i);
+		    Serial.print("At ");
+		    Serial.println(currentModelineStart);
+		    Serial.print("satAddress is ");
+		    Serial.println(satAddress);
+		    */
+		    if (satAddress == tleAddress) {
+		    	 if  (modelineRank == modelineCounter) {
+			    return currentModelineStart;
+			}
+			else {
+				modelineCounter++;
+			}
+		    }
+	
+	}
+	return 0;// This is not a sensible number, so we use it as an indication that
+	         //you've given a number without a corresponding modeline.
+} 
+
+struct modelineStruct TleStoreCallback::getModelineForAddress(unsigned int modelineStart) {
+	modelineStruct modeline;
+   modeline.modeName[5] = '\0';
+   readAnything(modelineStart + 2, modeline.modeName);
+   readAnything(modelineStart + 7, modeline.dlLong);
+   readAnything(modelineStart + 11, modeline.ulLong);
+   readAnything(modelineStart + 15, modeline.dlMode);
+   readAnything(modelineStart + 16, modeline.ulMode);
+   readAnything(modelineStart + 17, modeline.polarity);
+   readAnything(modelineStart + 18, modeline.dlShift);
+   readAnything(modelineStart + 22, modeline.ulShift);
+   readAnything(modelineStart + 26, modeline.tone);
+   return modeline;
+}
+/*
 struct modelineStruct TleStoreCallback::getModeline(unsigned int tleAddress) {
 	unsigned int modelineStart = HEADER_SIZE + TLE_RECORD_SIZE * numberOfTles;
 	unsigned int satAddress;
@@ -184,8 +271,9 @@ struct modelineStruct TleStoreCallback::getModeline(unsigned int tleAddress) {
 	for (int i = 0; i < numberOfModelines; i++) {
 	    readAnything(modelineStart + i * MODELINE_RECORD_SIZE,satAddress);
 	    if (satAddress == tleAddress) {
-			readAnything(modelineStart + 2 + i * MODELINE_RECORD_SIZE, modeline.modeName);
+		   // reverse these?
 		    modeline.modeName[5] = '\0';
+			readAnything(modelineStart + 2 + i * MODELINE_RECORD_SIZE, modeline.modeName);
 		    readAnything(modelineStart + 7 + i * MODELINE_RECORD_SIZE, modeline.dlLong);
 		    readAnything(modelineStart + 11 + i * MODELINE_RECORD_SIZE, modeline.ulLong);
 		    readAnything(modelineStart + 15 + i * MODELINE_RECORD_SIZE, modeline.dlMode);
@@ -199,7 +287,7 @@ struct modelineStruct TleStoreCallback::getModeline(unsigned int tleAddress) {
 }
 return modeline;
 }
-
+*/
  void TleStoreCallback::listTlesAndModelines() {
   readHeader();
   char satName[6];
@@ -238,14 +326,26 @@ return modeline;
     readAnything(HEADER_SIZE + 42 +  i *  TLE_RECORD_SIZE, RV);
     Serial.print("\tRV: ");
     Serial.println(RV);
-
-
+    Serial.print("\tNumber of Modes: ");
+    int noOfModes = countModelinesForTle(HEADER_SIZE +  i *  TLE_RECORD_SIZE);
+    Serial.println(noOfModes);
+    modelineStruct ml;
+    for (int x = 0; x < noOfModes; x++) {
+    unsigned int foo = getModelineStart(HEADER_SIZE +  i *  TLE_RECORD_SIZE, x);
+    ml = getModelineForAddress(foo);
+    Serial.print("\t\t");
+    Serial.print(x);
+    Serial.print(": ");
+    Serial.print(ml.modeName);
+    Serial.println(" ");
+  }
   }
   uint16_t satAddress;
   char modeName[5];
   uint32_t ulLong, dlLong;
   char dlMode, ulMode, polarity;
   float ulShift, dlShift;
+  unsigned int tone;
   int modelineStart = HEADER_SIZE + TLE_RECORD_SIZE * numberOfTles;
   for (int i = 0; i < numberOfModelines; i++) {
     readAnything(modelineStart + i * MODELINE_RECORD_SIZE,satAddress);
@@ -281,12 +381,17 @@ return modeline;
     readAnything(modelineStart + 22 + i * MODELINE_RECORD_SIZE, ulShift);
     Serial.print("\tuplink shift: ");
     Serial.println(ulShift);
+    readAnything(modelineStart + 26 + i * MODELINE_RECORD_SIZE, tone);
+    Serial.print("\ttone: ");
+    Serial.println(tone);
   }
 }
 
 boolean TleStoreCallback::readHeader() {
-  numberOfTles = ((read(0) << 0) & 0xFF) + ((read(1) << 8) & 0xFF00);
-  numberOfModelines = ((read(2) << 0) & 0xFF) + ((read(3) << 8) & 0xFF00);
+	readAnything(11, numberOfTles);
+	readAnything(13, numberOfModelines);
+//  numberOfTles = ((read(11) << 0) & 0xFF) + ((read(12) << 8) & 0xFF00);
+//  numberOfModelines = ((read(13) << 0) & 0xFF) + ((read(14) << 8) & 0xFF00);
 if (numberOfTles < 1 || numberOfTles > MAX_TLES) {return false;}
 else {return true;}
 }
