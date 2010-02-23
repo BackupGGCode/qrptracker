@@ -11,13 +11,13 @@
 #define FM 3
 #define FMN 4
 #define CWN 5
-#define PKT 3 // packet is FM
+#define PKT 6 // packet is FM
 #define NOR 0
 #define REV 1
 
 #define TLE_RECORD_SIZE 46
-#define MODELINE_RECORD_SIZE 26
-#define HEADER_SIZE 4
+#define MODELINE_RECORD_SIZE 28
+#define HEADER_SIZE 15
 #define MAX_TLES 5000 // change this number if we are using an external EEPROM
 
 typedef void (*writeCallback)(int, uint8_t);
@@ -34,12 +34,22 @@ class TleStoreCallback
 		void readTLE();
 		void dumpStore();
 		void listTlesAndModelines();
+		float getLatitude();
+		float getLongitude();
+		unsigned int getAltitude();
+		byte getVersion();
 		boolean readHeader();
-		unsigned int getSatAddress( int rank);
-		struct modelineStruct getModelineForSatNumber(int rank);
-		struct modelineStruct getModeline(unsigned int tleAddress);
-		struct tleStruct getTle(int place);
-		int numberOfModelines, numberOfTles;
+		unsigned int getSatAddress( byte rank);
+	//	struct modelineStruct getModelineForSatNumber(int rank);
+	//	struct modelineStruct getModeline(unsigned int tleAddress);
+		struct tleStruct getTle(byte place);
+		byte countModelinesForTle(unsigned int tleAddress);
+		unsigned int getModelineStart(unsigned int tleAddress, byte modelineRank);
+		struct modelineStruct getModelineForAddress(unsigned int modelineStart);
+		unsigned int numberOfModelines, numberOfTles;
+		
+		//float latitude, longitude;
+		//unsigned int altitude;
 		char * getSatNameFromAddress(uint16_t satAddress);
 	    void echoWriteChar(unsigned int address, char c);
  
@@ -74,6 +84,7 @@ struct modelineStruct {
   char polarity;
   float ulShift;
   float dlShift;
+  unsigned int tone;
   char modeName[5];
   uint16_t satAddress; //ints in arduino are 2-byte anyway
   //this limits the addressable space to 65,535 bytes = 512 kilobits
