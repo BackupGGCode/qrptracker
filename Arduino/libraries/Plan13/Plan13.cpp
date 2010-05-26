@@ -43,12 +43,12 @@ double Plan13::FNatn(double y, double x)
   return (a);
 }
 
-/* Convert date to day number
+/** Convert date to day number
  *
  * Function returns a general day number from year, month, and day.
  * Value is (JulianDay - 1721409.5) or (AmsatDay + 722100)
  *
- */
+**/
 double Plan13::FNday(int year, int month, int day)
 {
   double JulianDate;
@@ -205,9 +205,9 @@ void Plan13::initSat(void)
  if (DEBUG) { Serial.println("End initSat()");}
 }
 
-/*
+/**
  * Calculate satellite position at DN, TN
- */
+**/
 void Plan13::satvec(void)
 {
   if (DEBUG) {Serial.println("Start satvec()");}
@@ -248,21 +248,21 @@ void Plan13::satvec(void)
   Vy = B * C / DNOM * N0;
 
   AP = WP + WD * T * KDP;
-  CW = cos(AP);
+  CWw = cos(AP);
   SW = sin(AP);
   RAAN = RA + QD * T * KDP;
   CQ = cos(RAAN);
   SQ = sin(RAAN);
 
    /* Plane -> celestial coordinate transformation, [C] = [RAAN]*[IN]*[AP] */
-  CXx = CW * CQ - SW * CI * SQ;
-  CXy = -SW * CQ - CW * CI * SQ;
+  CXx = CWw * CQ - SW * CI * SQ;
+  CXy = -SW * CQ - CWw * CI * SQ;
   CXz = SI * SQ;
-  CYx = CW * SQ + SW * CI * CQ;
-  CYy = -SW * SQ + CW * CI * CQ;
+  CYx = CWw * SQ + SW * CI * CQ;
+  CYy = -SW * SQ + CWw * CI * CQ;
   CYz = -SI * CQ;
   CZx = SW * SI;
-  CZy = CW * SI;
+  CZy = CWw * SI;
   CZz = CI;
 
    /* Compute satellite's position vector, ANTenna axis unit vector    */
@@ -363,11 +363,10 @@ int Plan13::getDoppler64(unsigned long freq) {
 	uint64_t doppler_sixfour = freq * dopplerFactor;
 	return (int) doppler_sixfour/1E11;
 }
+
+
 void Plan13::printdata(void)
 {
-
-  
-
   Serial.print("AZ:");
   Serial.print(AZ);
   Serial.print(" EL: ");
@@ -383,7 +382,12 @@ Serial.print(SLON);
 Serial.print(" RR: ");
 Serial.print(RR);
 
+/** Setter method for uplink (tx) and downlink (rx) frequencies in Hz.
+These data need not be set if the doppler shifted frequencies are not needed.
 
+\param rxFrequncy_in the downlink frequency
+\param txFrequency_in the uplink frequency
+**/
 }
 void Plan13::setFrequency(unsigned long rxFrequency_in, unsigned long txFrequency_in) {
 	rxFrequencyLong = rxFrequency_in;
@@ -394,6 +398,14 @@ void Plan13::setFrequency(unsigned long rxFrequency_in, unsigned long txFrequenc
 	}
 }
 
+/** Setter method for indicating the location of the ground station. 
+This and setElements() must be done before the calculate method is applied for the first time.
+Thereafter, however, it doesn't matter unless the groundstation changes position.
+
+\param observer_lon_in the longitude of the observer, with east positive and west negative
+\param observer_lat_in the latitude of the observer with north positive and south negative
+\param height height of the observer, in meters
+**/
 void Plan13::setLocation(double observer_lon_in, double observer_lat_in, int height) {
 	observer_lon = observer_lon_in;//-64.375; //0.06; // lon east is positive, west is negative
 	observer_lat = observer_lat_in;//45.8958; //52.21; //Cambridge UK
@@ -405,6 +417,16 @@ void Plan13::setLocation(double observer_lon_in, double observer_lat_in, int hei
 	}
 }
 
+/**
+Setter method for UTC time at which the satellite is to be observed. 
+This is usually the current tim.
+\param yearIn The current year in four digits, like 2010
+\param  monthIn The month in two digits, like '10' for October
+\param mDayIn the day of the month, like '1' for the first day
+\param hourIn the hour of the day, like '19' for 19
+\param minIn the minute of the day, like '00' for the first
+\param secIn the seconds
+**/
 void Plan13::setTime(int yearIn, int monthIn, int mDayIn, int hourIn, int minIn, int secIn) {
   if (DEBUG) {
     Serial.println("Start setTime()");
@@ -447,6 +469,23 @@ void Plan13::setTime(int yearIn, int monthIn, int mDayIn, int hourIn, int minIn,
      Serial.println("End setTime()");
  }
 }
+/*******************
+* Sets the keplerian elements for the following calculations. If the TEST variable
+is defined 'true', some sample elements will be applied.
+
+\param YE_in the YE element
+\param TE_in the TE element
+\param IN_in the IN element
+\param RA_in the RA element
+\param EC_in the EC element
+\param WP_in the WP element
+\param MA_in the MA element
+\param MM_in the MM element
+\param M2_in the M2 element
+\param RV_in the RV element
+\param ALON_in the ALON element
+*******/
+
  void   Plan13::setElements(double YE_in, double TE_in, double IN_in, double 
          RA_in, double EC_in, double WP_in, double MA_in, double MM_in, 
          double M2_in, double RV_in, double ALON_in ) {
@@ -479,36 +518,67 @@ void Plan13::setTime(int yearIn, int monthIn, int mDayIn, int hourIn, int minIn,
   }
 
 }
-
+/**
+A function that joins together the necessary functions for calculating 
+the satellite position. You must set the keplerian elements, time and observer lat/long
+before using this.
+**/
   void  Plan13::calculate() {
 		initSat();
 		satvec();
 		rangevec();
    }
 
-float  *Plan13::footprintOctagon(float slat, float slon) {
-	static float points[16];
-	float srad = acos(RE/RS);
-	float cla= cos(slat);
-	float sla = sin(slat);
-	float clo = cos(slon);
-	float slo = sin(slon);
+ void Plan13::footprintOctagon(float *points, float SLATin, float SLONin, float REin, float RSin) {
+	//static float points[16];
+	Serial.print("SLAT: ");
+	Serial.print(SLATin);
+	Serial.print(", SLON: ");
+	Serial.print(SLONin);
+	Serial.print(", RE: ");
+	Serial.print(REin);
+	Serial.print(", RS: ");
+	Serial.println(RSin);
+	float srad = acos(REin/RSin); // Beta in Davidoff diag. 13.2, this is in rad
+	Serial.print("srad: ");
+	Serial.println(srad);
+	float cla= cos(rad(SLATin));
+	float sla = sin(rad(SLATin));
+	float clo = cos(rad(SLONin));
+	float slo = sin(rad(SLONin));
 	float sra = sin(srad);
 	float cra = cos(srad);
 	for (int i = 0; i < 16; i = i +2) {
-		float a = 2 * M_PI * i / 8;
+		float a = 2 * M_PI * i / 16;
+		Serial.print("\ta: ");
+		Serial.println(a);
 		float X = cra;
+		Serial.print("\t first X: ");
+		Serial.println(X);
+		Serial.print("\t first Y: ");
 		float Y = sra*sin(a);
+		Serial.println(Y);
 		float Z = sra*cos(a);
+		Serial.print("\t first Z: ");
+		Serial.println(Z);
 		float x = X*cla - Z*sla;
 		float y = Y;
 		float z = X*sla + Z*cla;
 		X = x*clo - y*slo;
+		Serial.print("\tX: ");
+		Serial.println(X);
 		Y = x*slo + y*clo;
+		Serial.print("\tY: ");
+		Serial.println(Y);
 		Z = z; 
-		points[i] = FNatn(Y,X);
-		points[i+1] = asin(Z);	
+		Serial.print("\tZ: ");
+		Serial.println(Z);
+		points[i] = deg(FNatn(Y,X));
+		Serial.print("\t Long: ");
+		Serial.print(points[i]);
+		points[i+1] = deg(asin(Z));
+		Serial.print("\t Lat: ");
+		Serial.println(points[i+1]);
 	}
-	return points;
 }
 
