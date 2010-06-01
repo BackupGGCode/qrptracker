@@ -51,12 +51,12 @@ char * elements[NUMBER_OF_TLES][3]={
 void setup() {
   Serial.begin(57600);
   Serial.println("Ok");
- // predict.setTime(0);
- // predict.calc(predict.co57);
+ predict.setTime(0);
+ predict.calc(predict.co57);
 }
 
 void loop() {
- if (DateTime.available()) {
+ /*if (DateTime.available()) {
   if (dateTimeStart){
     layout();
     Serial.println("true");
@@ -67,9 +67,10 @@ void loop() {
     Serial.println("false");
     dateTimeStart = true;
   }
- predict.setTime(0);
- predict.calc(predict.co57);
  }
+ //predict.setTime(0);
+ //predict.calc(predict.co57);*/
+ exit(0);
 }
 
 void layout() {
