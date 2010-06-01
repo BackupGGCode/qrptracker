@@ -11,6 +11,8 @@
 //#include <math.h>
 //#include <stdio.h>
 //#include <sys/time.h>
+#ifndef pred13t
+#define pred13t
 #include "WProgram.h"
 
 #define xke		7.43669161E-2
@@ -102,23 +104,8 @@ class Pred13t {
 	
 	
 	Pred13t::tle_t elements;
-//	double rad(double deg);
-//	double deg(double rad);
-//	double FNatn(double y, double x);
-//	double FNday(int year, int month, int day);
-//	double myFNday(int year, int month, int day, int uh, int um, int us);
-//	double getElement(char *gstr, int gstart, int gstop);
-//	void readElements(char *satellite);
-//	void initSat(void);
-//	void satvec(void);
-//	void rangevec(void);
-//	void sunvec(void);
-//	void calculate(void);
-//	void footprintOctagon(float *octagon, float SLATin, float SLONin, float REin, float RAin);
-//	void printdata(void);
-//	void setFrequency(unsigned long rx_frequency, unsigned long tx_frequency);
-//	void setLocation(double lon, double lat, int height);
-//	void setTime(int yearIn, int monthIn, int mDayIn, int hourIn, int minIn, int secIn);
+	Pred13t::tle_t co57;
+    
 	
 	void setElements(Pred13t::tle_t);
 	int isFlagClear(int flag);
@@ -127,10 +114,24 @@ class Pred13t {
 	double FMod2p(double x);
 	void SGP4(double tsince, Pred13t::tle_t * tle, Pred13t::vector_t * pos, Pred13t::vector_t * vel);
         void setTime(double unixTimeAndMicroseconds);
-        void calc(Pred13t::tle_t tle);
-
-	
-	
+        void calc(tle_t tle);
+		double Degrees(double arg);
+		double AcTan(double sinx, double cosx);
+		double Frac(double arg);
+		double Modulus(double arg1, double arg2);
+		double ThetaG_JD(double jd);
+		double Sqr(double arg);
+		void Magnitude(vector_t *v);
+		void Scale_Vector(double k, vector_t *v);
+		void Convert_Sat_State(vector_t *pos, vector_t *vel);
+		void printTle(tle_t *tle);
+		void select_ephemeris(tle_t *tle);
+		void Calculate_LatLonAlt(double time, vector_t *pos, geodetic_t *geodetic);
+		void printVector(vector_t *vector);
+		void printGeo(geodetic_t *geo);
+		double Julian_Date_of_Year(double year);
+		double Julian_Date_of_Epoch(double epoch);
+		
 //	int getDoppler(unsigned long freq);
 //	int getDoppler64(unsigned long freq);
 	
@@ -308,5 +309,5 @@ class Pred13t {
 	private:
 	void	foo();
 };
-
+#endif
 
