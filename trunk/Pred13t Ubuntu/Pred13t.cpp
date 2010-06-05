@@ -6,6 +6,7 @@
  *  Copyright 2010 Andrew Edmunds. All rights reserved.
  *  Parts of this code are taken from PREDICT, an open source
  *  multi-user satellite tracking and orbital predition program.
+ *  The algorithm used in this program is the SGP4 algorithm.
  *  
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,9 +22,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "WProgram.h"
-#include "Pred13t.h"
 
+#include "Pred13t.h"
+//#include "WProgram.h"
 #define DEBUG false
 #define TEST false
 
@@ -40,29 +41,29 @@ Pred13t::tle_t co57 = {10144.03510745,//ye, then time
 		3031, //Sat cat number
 		8022, // element set number
 		35761,//reveloution Number at Epoch
-		"CO-57", "03031J"};//international Designation
+		"CO-57", "03031J"};//international Designation}
 
 void Pred13t::setElements(tle_t x){
 	elements = x;	
 }
 
-double Pred13t::Degrees(double arg)
+double Degrees(double arg)
 {
 	/* Returns angle in degrees from argument in radians */
 	return (arg/deg2rad);
 }
 
-void Pred13t::SetFlag(int flag)
+void SetFlag(int flag)
 {
 	Flags|=flag;
 }
 
-void Pred13t::ClearFlag(int flag)
+void ClearFlag(int flag)
 {
 	Flags&=~flag;
 }
 
-double Pred13t::FMod2p(double x)
+double FMod2p(double x)
 {
 	/* Returns mod 2PI of argument */
 	
@@ -79,9 +80,9 @@ double Pred13t::FMod2p(double x)
 	return ret_val;
 }
 
-double Pred13t::AcTan(double sinx, double cosx)
+double AcTan(double sinx, double cosx)
 {
-	/* Four-quadrant arctan fun7201.145199ction */
+	/* Four-quadrant arctan function */
 	
 	if (cosx==0.0)
 	{
@@ -107,18 +108,18 @@ double Pred13t::AcTan(double sinx, double cosx)
 	return (pi+atan(sinx/cosx));
 }
 
-int Pred13t::isFlagClear(int flag)
+int isFlagClear(int flag)
 {
 	return (~Flags&flag);
 }
 
-double Pred13t::Frac(double arg)
+double Frac(double arg)
 {
 	/* Returns fractional part of double argument */
 	double ans = arg - (int)(arg);
 	return ans;
 }
-double Pred13t::Modulus(double arg1, double arg2)
+double Modulus(double arg1, double arg2)
 {
 	/* Returns arg1 mod arg2 */
 
@@ -135,7 +136,7 @@ double Pred13t::Modulus(double arg1, double arg2)
 	return ret_val;
 }
 
-double Pred13t::ThetaG_JD(double jd)
+double ThetaG_JD(double jd)
 {
 	/* Reference:  The 1992 Astronomical Almanac, page B6. */
 
@@ -149,17 +150,17 @@ double Pred13t::ThetaG_JD(double jd)
 
 	return (twopi*GMST/secday);
 }
-double Pred13t::Sqr(double arg)
+double Sqr(double arg)
 {
 	/* Returns square of a double */
 	return (arg*arg);
 }
-void Pred13t::Magnitude(Pred13t::vector_t *v)
+void Magnitude(Pred13t::vector_t *v)
 {
 	/* Calculates scalar magnitude of a vector_t argument */
 	v->w=sqrt(Sqr(v->x)+Sqr(v->y)+Sqr(v->z));
 }
-void Pred13t::Scale_Vector(double k, Pred13t::vector_t *v)
+void Scale_Vector(double k, Pred13t::vector_t *v)
 { 
 	/* Multiplies the vector v1 by the scalar k */
 	v->x*=k;
@@ -167,7 +168,7 @@ void Pred13t::Scale_Vector(double k, Pred13t::vector_t *v)
 	v->z*=k;
 	Magnitude(v);
 }
-void Pred13t::Convert_Sat_State(Pred13t::vector_t *pos, Pred13t::vector_t *vel)
+void Convert_Sat_State(Pred13t::vector_t *pos, Pred13t::vector_t *vel)
 {
 	/* Converts the satellite's position and velocity  */
 	/* vectors from normalized values to km and km/sec */ 
@@ -175,74 +176,20 @@ void Pred13t::Convert_Sat_State(Pred13t::vector_t *pos, Pred13t::vector_t *vel)
 	Scale_Vector(xkmper*minday/secday, vel);
 }
 
-void Pred13t::printVar(char *name, double var)
+void printVar(char *name, double var)
 {
-    Serial.print(name);
-    Serial.print(": ");
-    Serial.println(var *1000000);
-    //printDouble(var);
+	printf("%s: %f\n", name, var * 1000000);
 }
 
-void Pred13t::printDouble( double val){
-  // prints val with number of decimal places determine by precision
-  // precision is a number from 0 to 6 indicating the desired decimial places
-  // example: printDouble( 3.1415, 2); // prints 3.14 (two decimal places)
-
-    int precision = 7;
-  Serial.print (int(val));  //prints the int part
-  if( precision > 0) {
-    Serial.print("."); // print the decimal point
-    unsigned long frac;
-    unsigned long mult = 1;
-    byte padding = precision -1;
-    while(precision--)
-	 mult *=10;
-
-    if(val >= 0)
-	frac = (val - int(val)) * mult;
-    else
-	frac = (int(val)- val ) * mult;
-    unsigned long frac1 = frac;
-    while( frac1 /= 10 )
-	padding--;
-    while(  padding--)
-	Serial.print("0");
-    Serial.println(frac,DEC) ;
-
-  }
-}
-
-
-
-void Pred13t::printTle(Pred13t::tle_t *tle)
+void printTle(Pred13t::tle_t *tle)
 {
-    Serial.print("Epoch: ");
-    printDouble(tle->epoch);
-    Serial.print("Drag: ");
-    printDouble(tle->xndt2o);
-    Serial.print("Drag2: ");
-    printDouble(tle->xndd6o);
-    Serial.print("Bstar: ");
-    printDouble(tle->bstar);
-    Serial.print("Inclination: ");
-    printDouble(tle->xincl);
-    Serial.print("RA: ");
-    printDouble(tle->xnodeo);
-    Serial.print("EO ");
-    printDouble(tle->eo);
-    Serial.print("Omega: ");
-    printDouble(tle->omegao);
-    Serial.print("Xmo: ");
-    printDouble(tle->xmo);
-    Serial.print("Xno: ");
-    printDouble(tle->xno);
-   //printf("Epoch: %f\nDrag: %f\nDrag2: %f\nBstar: %f\nInclination: %f\n",
-   //         tle->epoch,tle->xndt2o,tle->xndd6o,tle->bstar,tle->xincl);            
-   //printf("RA: %f\nEO: %f\nOmega: %f\nXmo: %f\nXno: %f\n",
-   //         tle->xnodeo,tle->eo,tle->omegao,tle->xmo,tle->xno);
+    printf("Epoch: %f\nDrag: %f\nDrag2: %f\nBstar: %f\nInclination: %f\n",
+            tle->epoch,tle->xndt2o,tle->xndd6o,tle->bstar,tle->xincl);            
+    printf("RA: %f\nEO: %f\nOmega: %f\nXmo: %f\nXno: %f\n",
+            tle->xnodeo,tle->eo,tle->omegao,tle->xmo,tle->xno);
 }
 
-void Pred13t::select_ephemeris(Pred13t::tle_t *tle)
+void select_ephemeris(Pred13t::tle_t *tle)
 {
 	/* Selects the apropriate ephemeris type to be used */
 	/* for predictions according to the data in the TLE */
@@ -258,15 +205,14 @@ void Pred13t::select_ephemeris(Pred13t::tle_t *tle)
 	tle->xincl*=deg2rad;
 	temp=twopi/minday/minday;
 	tle->xno=tle->xno*temp*minday;
-        printVar("xno", tle->xno);
+    printVar("xno", tle->xno);
 	tle->xndt2o*=temp;
 	tle->xndd6o=tle->xndd6o*temp/minday;
 	tle->bstar/=ae;
-        printVar("bstar:", tle->bstar);
 
 	/* Period > 225 minutes is deep space */
 	dd1=(xke/tle->xno);
-        printVar("dd1", dd1);
+    printVar("dd1", dd1);
 	dd2=tothrd;
 	a1=pow(dd1,dd2);
 	r1=cos(tle->xincl);
@@ -276,7 +222,7 @@ void Pred13t::select_ephemeris(Pred13t::tle_t *tle)
 	ao=a1*(1.0-del1*(tothrd*.5+del1*(del1*1.654320987654321+1.0)));
 	delo=temp/(ao*ao);
 	xnodp=tle->xno/(delo+1.0);
-        printVar("xnodp",xnodp);
+	printVar("xnodp", xnodp);
 
 	/* Select a deep-space/near-earth ephemeris */
 
@@ -287,7 +233,7 @@ void Pred13t::select_ephemeris(Pred13t::tle_t *tle)
 }
 
 
-void Pred13t::SGP4(double tsince, Pred13t::tle_t * tle, Pred13t::vector_t * pos, Pred13t::vector_t * vel)
+void SGP4(double tsince, Pred13t::tle_t * tle, Pred13t::vector_t * pos, Pred13t::vector_t * vel)
 {
 	/* This function is used to calculate the position and velocity */
 	/* of near-earth (period < 225 minutes) satellites. tsince is   */
@@ -296,9 +242,7 @@ void Pred13t::SGP4(double tsince, Pred13t::tle_t * tle, Pred13t::vector_t * pos,
 	/* are vector_t structures returning ECI satellite position and */ 
 	/* velocity. Use Convert_Sat_State() to convert to km and km/s. */
 	
-       // unsigned int c1;
-	
-        static double aodp, aycof, c1, c4, c5, cosio, d2, d3, d4, delmo,
+	static double aodp, aycof, c1, c4, c5, cosio, d2, d3, d4, delmo,
 	omgcof, eta, omgdot, sinio, xnodp, sinmo, t2cof, t3cof, t4cof,
 	t5cof, x1mth2, x3thm1, x7thm1, xmcof, xmdot, xnodcf, xnodot, xlcof;
 	
@@ -327,14 +271,13 @@ void Pred13t::SGP4(double tsince, Pred13t::tle_t * tle, Pred13t::vector_t * pos,
 		/* semimajor axis (aodp) from input elements. */
 		
 		a1=pow(xke/tle->xno,tothrd);
-                printVar("a1",a1);
+		printVar("a1", a1);
 		cosio=cos(tle->xincl);
-                printVar("Tle->xincl",tle->xincl);
+        printVar("Tle->xincl", tle->xincl);
 		theta2=cosio*cosio;
-                printVar("theta2",theta2);
-                printVar("cosio",cosio);                
 		x3thm1=3*theta2-1.0;
-                Serial.println(cos(2.54));
+		printVar("theta2",theta2);
+		printVar("cosio",cosio);
 		eosq=tle->eo*tle->eo;
 		betao2=1.0-eosq;
 		betao=sqrt(betao2);
@@ -344,7 +287,8 @@ void Pred13t::SGP4(double tsince, Pred13t::tle_t * tle, Pred13t::vector_t * pos,
 		xnodp=tle->xno/(1.0+delo);
 		aodp=ao/(1.0-delo);
 
-                printVar("aodp", aodp);
+        printVar("aodp", aodp);
+
 		
 		/* For perigee less than 220 kilometers, the "simple"     */
 		/* flag is set and the equations are truncated to linear  */
@@ -364,8 +308,7 @@ void Pred13t::SGP4(double tsince, Pred13t::tle_t * tle, Pred13t::vector_t * pos,
 		s4=s;
 		qoms24=qoms2t;
 		perigee=(aodp*(1-tle->eo)-ae)*xkmper;
-
-                printVar("perigee", perigee);
+		printVar("perigee", perigee);
 		
 		if (perigee<156.0)
 		{
@@ -386,33 +329,27 @@ void Pred13t::SGP4(double tsince, Pred13t::tle_t * tle, Pred13t::vector_t * pos,
 		psisq=fabs(1-etasq);
 		coef=qoms24*pow(tsi,4);
 		coef1=coef/pow(psisq,3.5);
-                printVar("xnodp", xnodp);
-                printVar("coef1",coef1);
+		printVar("coef1",coef1);
 		c2=coef1*xnodp*(aodp*(1+1.5*etasq+eeta*(4+etasq))+0.75*ck2*tsi/psisq*x3thm1*(8+3*etasq*(8+etasq)));
-                //THE LINE ABOVE CONTAINS THE FIRST DETECTED DERAILMENT.
-                printVar("etasq",etasq);
-                printVar("eeta",eeta);
-                printVar("ck2",ck2);
-                printVar("tsi",tsi);
-                printVar("psisq",psisq);
-                printVar("x3thm1",x3thm1);
-                printVar("NEGATIVE", -4.223);
-                printVar("c2",c2);
-                c1=tle->bstar*c2;
-                printVar("c1",c1);
-                printVar("BSTAR: ", tle->bstar);
+		printVar("xnodp", xnodp);
+		printVar("etasq",etasq);
+		printVar("eeta",eeta);
+		printVar("ck2",ck2);
+		printVar("tsi",tsi);
+		printVar("psisq",psisq);
+		printVar("x3thm1",x3thm1);
+		printVar("c2",c2);
+		c1=tle->bstar*c2;
+		printVar("c1",c1);
+        printVar("BSTAR: ", tle->bstar);
 		sinio=sin(tle->xincl);
 		a3ovk2=-xj3/ck2*pow(ae,3);
 		c3=coef*tsi*a3ovk2*xnodp*ae*sinio/tle->eo;
-                printVar("c3",c3);
 		x1mth2=1-theta2;
-
-                printVar("x1mth2", x1mth2);
+		printVar("x1mth2", x1mth2);
 		
 		c4=2*xnodp*coef1*aodp*betao2*(eta*(2+0.5*etasq)+tle->eo*(0.5+2*etasq)-2*ck2*tsi/(aodp*psisq)*(-3*x3thm1*(1-2*eeta+etasq*(1.5-0.5*eeta))+0.75*x1mth2*(2*etasq-eeta*(1+etasq))*cos(2*tle->omegao)));
-                printVar("c4", c4);
 		c5=2*coef1*aodp*betao2*(1+2.75*(etasq+eeta)+eeta*etasq);
-                printVar("c5",c5);
 		
 		theta4=theta2*theta2;
 		temp1=3*ck2*pinvsq*xnodp;
@@ -427,19 +364,16 @@ void Pred13t::SGP4(double tsince, Pred13t::tle_t * tle, Pred13t::vector_t * pos,
 		xmcof=-tothrd*coef*tle->bstar*ae/eeta;
 		xnodcf=3.5*betao2*xhdot1*c1;
 		t2cof=1.5*c1;
-                printVar("t2cof", t2cof);                
-
+        printVar("t2cof", t2cof);
 		xlcof=0.125*a3ovk2*sinio*(3+5*cosio)/(1+cosio);
 		aycof=0.25*a3ovk2*sinio;
 		delmo=pow(1+eta*cos(tle->xmo),3);
 		sinmo=sin(tle->xmo);
 		x7thm1=7*theta2-1;
-
-                printVar("x7thm1", x7thm1);
+		printVar("x7thm1", x7thm1);
 		
 		if (isFlagClear(SIMPLE_FLAG))
 		{
-                        Serial.println("YOU ARE RUNNING");
 			c1sq=c1*c1;
 			d2=4*aodp*tsi*c1sq;
 			temp=d2*tsi*c1/3;
@@ -458,13 +392,14 @@ void Pred13t::SGP4(double tsince, Pred13t::tle_t * tle, Pred13t::vector_t * pos,
 	omega=omgadf;
 	xmp=xmdf;
 	tsq=tsince*tsince;
-        printVar("tsq", tsq);        
+	printVar("tsq", tsq);        
+
 	xnode=xnoddf+xnodcf*tsq;
 	tempa=1-c1*tsince;
 	tempe=tle->bstar*c4*tsince;
 	templ=t2cof*tsq;
-        printVar("templ", templ);
-        
+	printVar("templ", templ);
+
     
 	if (isFlagClear(SIMPLE_FLAG))
 	{
@@ -570,28 +505,8 @@ void Pred13t::SGP4(double tsince, Pred13t::tle_t * tle, Pred13t::vector_t * pos,
 	vel->y=rdotk*uy+rfdotk*vy;
 	vel->z=rdotk*uz+rfdotk*vz;
 
-        //printf("1st Position: (%f,%f,%f,%f)\n", pos->x,pos->y,pos->z,pos->w);
-        Serial.print("1st Pos: (");
-        Serial.print(pos->x);
-        Serial.print(", ");
-        Serial.print(pos->y);
-        Serial.print(", ");
-        Serial.print(pos->z);
-        Serial.print(", ");
-        Serial.print(pos->w);
-        Serial.println(")");
-
-        Serial.print("1st Vel: (");
-        Serial.print(vel->x);
-        Serial.print(", ");
-        Serial.print(vel->y);
-        Serial.print(", ");
-        Serial.print(vel->z);
-        Serial.print(", ");
-        Serial.print(vel->w);
-        Serial.println(")");
-
-        //printf("1st Velocity: (%f,%f,%f,%f)\n)", vel->x,vel->y,vel->z,vel->w);        
+        printf("1st Position: (%f,%f,%f,%f)\n", pos->x,pos->y,pos->z,pos->w);
+        printf("1st Velocity: (%f,%f,%f,%f)\n)", vel->x,vel->y,vel->z,vel->w);        
 	
 	/* Phase in radians */
 	phase=xlt-xnode-omgadf+twopi;
@@ -602,7 +517,7 @@ void Pred13t::SGP4(double tsince, Pred13t::tle_t * tle, Pred13t::vector_t * pos,
 	phase=FMod2p(phase);
 }
 
-void Pred13t::Calculate_LatLonAlt(double time, Pred13t::vector_t *pos,  Pred13t::geodetic_t *geodetic)
+void Calculate_LatLonAlt(double time, Pred13t::vector_t *pos,  Pred13t::geodetic_t *geodetic)
 {
 	/* Procedure Calculate_LatLonAlt will calculate the geodetic  */
 	/* position of an object given its ECI position pos and time. */
@@ -634,31 +549,15 @@ void Pred13t::Calculate_LatLonAlt(double time, Pred13t::vector_t *pos,  Pred13t:
 		geodetic->lat-=twopi;
 }
 
-void Pred13t::printVector(Pred13t::vector_t *vec){
-	Serial.print("x: ");
-	Serial.println(vec->x);
-	Serial.print("y: ");
-	Serial.println(vec->y);
-	Serial.print("z: ");
-	Serial.println(vec->z);
-	Serial.print("w:");
-	Serial.println(vec->w);
-   //printf("x: %f\ny: %f\nz: %f\nw: %f\n",vec->x, vec->y, vec->z, vec->w);
+void printVector(Pred13t::vector_t *vec){
+    printf("x: %f\ny: %f\nz: %f\nw: %f\n",vec->x, vec->y, vec->z, vec->w);
 }
 
-void Pred13t::printGeo(Pred13t::geodetic_t *geo){
-  		Serial.print("lat: ");
-		Serial.println(Degrees(geo->lat));
-		Serial.print("lon: ");
-		Serial.println(Degrees(geo->lon));
-		Serial.print("alt: ");
-		Serial.println(geo->alt);
-		Serial.print("theta: ");
-		Serial.println(geo->theta);
-	   //printf("lat: %f\nlon: %f\nalt: %f\ntheta: %f\n",Degrees(geo->lat), 360 -Degrees(geo->lon), geo->alt, geo->theta);
-	}
+void printGeo(Pred13t::geodetic_t *geo){
+    printf("lat: %f\nlon: %f\nalt: %f\ntheta: %f\n",Degrees(geo->lat), 360 -Degrees(geo->lon), geo->alt, geo->theta);
+}
 
-double Pred13t::Julian_Date_of_Year(double year)
+double Julian_Date_of_Year(double year)
 {
 	/* The function Julian_Date_of_Year calculates the Julian Date  */
 	/* of Day 0.0 of {year}. This function is used to calculate the */
@@ -683,7 +582,7 @@ double Pred13t::Julian_Date_of_Year(double year)
 	return jdoy;
 }
 
-double Pred13t::Julian_Date_of_Epoch(double epoch)
+double Julian_Date_of_Epoch(double epoch)
 { 
 	/* The function Julian_Date_of_Epoch returns the Julian Date of     */
 	/* an epoch specified in the format used in the NORAD two-line      */
@@ -708,43 +607,26 @@ double Pred13t::Julian_Date_of_Epoch(double epoch)
 }
 /* Sets the time to specified time. Format is standard Unix time, seconds    */
 /*   from epoch plus microseconds.                                           */
-void Pred13t::setTime(double utams)
+void setTime(double utams)
 {
     seconds = utams;
     if (utams <= 0)
     {
-        //struct timeval tptr;
+     //   struct timeval tptr;
 
-        //gettimeofday(&tptr, NULL);
+     //   gettimeofday(&tptr, NULL);
 
-        //usecs = 0.000001*(double)tptr.tv_usec;
-        //seconds = usecs + (double) tptr.tv_sec;
-        seconds = 1275395947.0;
+       // usecs = 0.000001*(double)tptr.tv_usec;
+       // seconds = usecs + (double) tptr.tv_sec;
+   	seconds = 1275395947.0; 
     }
     daynum = seconds/86400.0 - 3651.0;
-    Serial.print("Daynum: ");
-    Serial.println(daynum);
 
 
 
 }
 
-void Pred13t::calc(Pred13t::tle_t t){
-     Pred13t::tle_t tle = {10144.03510745,//ye, then time
-		.00000045,//ndot/2 drag parameter
-		00000.0,//n double dot/6 Drag Parameter
-		0.000042, //bstar drag parameter
-		98.7132,//inclination IN
-		152.4464, //RA
-		.000873,//eccentricity EC
-		245.714100, //WP
-		114.3119,//mean anomaly MA
-		14.20500354,//mean motion MM
-		3031, //Sat cat number
-		8022, // element set number
-		35761,//reveloution Number at Epoch
-		"CO-57", "03031J"};
-
+void calc(Pred13t::tle_t t){
         Pred13t::vector_t zero_vector={0,0,0,0};
         Pred13t::vector_t pos = zero_vector;
         Pred13t::vector_t vel = zero_vector;
@@ -752,49 +634,26 @@ void Pred13t::calc(Pred13t::tle_t t){
 
         jul_utc = daynum+2444238.5;
         jul_epoch=Julian_Date_of_Epoch(t.epoch);
-        t_since = (jul_utc - jul_epoch) * minday;
+        tsince = (jul_utc - jul_epoch) * minday;
 
-        //printf("TimeSince: %f\nUnix: %f\n", tsince, seconds - usecs );
-        //printf("TimeLatLong: %f\n", jul_utc);
-			Serial.print("TimeSince: ");
-			Serial.print(t_since);
-			/*
-			For the following to work, the code in setTime has to be uncommented, and 
-			class variables have to be declared
-			
-			Serial.print(" Unix: ");
-			Serial.println(seconds - usecs);
-			*/
-			Serial.print("TimeLatLong: ");
-			Serial.println(jul_utc);
-       // printTle(&tle);
-        
-        select_ephemeris(&tle);
-        Serial.println("After");
-       // printTle(&tle);        
+        printf("TimeSince: %f\nUnix: %f\n", tsince, seconds - usecs );
+        printf("TimeLatLong: %f\n", jul_utc);
+
+        select_ephemeris(&t);
     
-	SGP4(t_since, &tle, &pos, &vel);
+	SGP4(tsince, &t, &pos, &vel);
 	Convert_Sat_State(&pos, &vel);   
 	Magnitude(&vel);        
 	Calculate_LatLonAlt(jul_utc, &pos, &geo);
-        SLAT = Degrees(geo.lat);
-        SLON= 360 - Degrees(geo.lon);
-		Serial.println("Position: ");
-		printVector(&pos);
-		Serial.println("Velocity: ");
-		printVector(&vel);
-		Serial.println("Geo: ");
-		printGeo(&geo);
-		//printGeo(&geo);
-        //printf("Position\n");
-        //printVector(&pos);
-        //printf("Velocity:\n");
-        //printVector(&vel);
-        //printf("Geo:\n");
-        //printGeo(&geo);
+        printf("Position\n");
+        printVector(&pos);
+        printf("Velocity:\n");
+        printVector(&vel);
+        printf("Geo:\n");
+        printGeo(&geo);
 	}
 	
-/*
+
 int main(){
     setTime(0);
     calc(co57);
@@ -804,4 +663,3 @@ int main(){
 	//printf("Done");
 
 }
-*/

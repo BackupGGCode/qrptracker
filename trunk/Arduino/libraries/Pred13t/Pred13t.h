@@ -38,6 +38,7 @@
 #define minday		1.44E3			/* Minutes per day */
 #define deg2rad		1.745329251994330E-2	/* Degrees to radians */
 #define DEEP_SPACE_EPHEM_FLAG  0x000040
+#define INTCONST 10000000 /* Multiples doubles by this to save precision */
 
 
 
@@ -108,6 +109,10 @@ class Pred13t {
     
 	
 	void setElements(Pred13t::tle_t);
+        void printVar(char *name, double var);
+        
+        void printDouble(double val);
+        
 	int isFlagClear(int flag);
 	void SetFlag(int flag);
 	void ClearFlag(int flag);
@@ -132,182 +137,10 @@ class Pred13t {
 		double Julian_Date_of_Year(double year);
 		double Julian_Date_of_Epoch(double epoch);
 		
-//	int getDoppler(unsigned long freq);
-//	int getDoppler64(unsigned long freq);
-	
-	//double rx, tx;
-//	double observer_lon;
-//	double observer_lat;
-//	int observer_height;
-//	unsigned long rxOutLong;
-//	unsigned long txOutLong;
-//	unsigned long rxFrequencyLong;
-//	unsigned long txFrequencyLong;
-//	float dopplerFactor;
-//	const static double   YM = 365.25;     /* Days in a year                     */
-//	double   EL;                           /* Elevation                          */
-//	double   TN;                           /*                                    */
-//	
-//	double   E;
-//	double   N;
-//	double   AZ;
-//	double   SLON;
-//	double   SLAT;
-//	double   RR;
-//	
-//	double   CL;
-//	double   CS;
-//	double   SL;
-//	double   CO;
-//	double   SO;
-//	double   RE;
-//	double   FL;
-//	double   RP;
-//	double   XX;
-//	double   ZZ;
-//	double   D;
-//	double   R;
-//	double   Rx;
-//	double   Ry;
-//	double   Rz;
-//	double   Ex;
-//	double   Ey;
-//	double   Ez;
-//	double   Ny;
-//	double   Nx;
-//	double   Nz;
-//	double   Ox;
-//	double   Oy;
-//	double   Oz;
-//	double   U;
-//	double   Ux;
-//	double   Uy;
-//	double   Uz;
-//	const static double   YT = 365.2421970;
-//	double   WW;
-//	double   WE;
-//	double   W0;
-//	double   VOx;
-//	double   VOy;
-//	double   VOz;
-//	double   DE;
-//	double   GM;
-//	double   J2;
-//	double   N0;
-//	double   A0;
-//	double   b0;
-//	double   SI;
-//	double   CI;
-//	double   PC;
-//	double   QD;
-//	double   WD;
-//	double   DC;
-//	double   YG;
-//	double   G0;
-//	double   MAS0;
-//	double   MASD;
-//	double   INS;
-//	double   CNS;
-//	double   SNS;
-//	double   EQC1;
-//	double   EQC2;
-//	double   TEG;
-//	double   GHAE;
-//	double   MRSE;
-//	double   MASE;
-//	double   ax;
-//	double   ay;
-//	double   az;
-//	int      OLDRN;
-//	
-//	double   T;
-//	double   DT;
-//	double   KD;
-//	double   KDP;
-//	double   M;
-//	int      DR;
-//	long     RN;
-//	double   EA;
-//	double   C;
-//	double   S;
-//	double   DNOM;
-//	double   A;
-//	double   B;
-//	double   RS;
-//	double   Sx;
-//	double   Sy;
-//	//double   Sz;
-//	double   Vx;
-//	double   Vy;
-//	double   Vz;
-//	double   AP;
-//	double   CWw;
-//	double   SW;
-//	double   RAAN;
-//	double   CQ;
-//	double   SQ;
-//	double   CXx;
-//	double   CXy;
-//	double   CXz;
-//	double   CYx;
-//	double   CYy;
-//	double   CYz;
-//	double   CZx;
-//	double   CZy;
-//	double   CZz;
-//	double   SATx;
-//	double   SATy;
-//	double   SATz;
-//	double   ANTx;
-//	double   ANTy;
-//	double   ANTz;
-//	double   VELx;
-//	double   VELy;
-//	double   VELz;
-//	double   Ax;
-//	double   Ay;
-//	double   Az;
-//	double   Sz;
-//	//double   Vz;
-//	double   GHAA;
-//	
-//	double   DS;
-//	double   DF;
-//	
-//	/* keplerians */
-//	
-//	char     SAT[20];
-//	long     SATNO;
-//	double   YE;
-//	double   TE;
-//	double   IN;
-//	double   RA;
-//	double   EC;
-//	double   WP;
-//	double   MA;
-//	double   MM;
-//	double   M2;
-//	long     RV;
-//	double   ALON;
-//	double   ALAT;
-//	double   rxOut;
-//	double   txOut;
-//	
-//	/* location */
-//	char     LOC[20];
-//	double   LA;
-//	double   LO;
-//	double   HT;
-//	
-//	double      HR;                        /* Hours */
-//	double      DN;
-	
+
 
 	
-	
-	
-	private:
-	void	foo();
+
 };
 #endif
 
