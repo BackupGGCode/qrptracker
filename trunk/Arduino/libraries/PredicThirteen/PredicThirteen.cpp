@@ -1,5 +1,5 @@
 /* 
- *  pred13t.cpp
+ *  PredicThirteen.cpp
  *  
  *
  *  Created by Andrew Edmunds on 10-05-26.
@@ -23,12 +23,12 @@
  *
  */
 #include <time.h>
-#include "Pred13t_float.h"
+#include "PredicThirteen_float.h"
 //#include "WProgram.h"
 #define DEBUG false
 #define TEST false
 
-Pred13t::tle_t co57 = {10,
+PredicThirteen::tle_t co57 = {10,
                  144.03510745,//ye, then time
 		.00000045,//ndot/2 drag parameter
 		00000.0,//n float dot/6 Drag Parameter
@@ -44,7 +44,7 @@ Pred13t::tle_t co57 = {10,
 		35761,//reveloution Number at Epoch
 		"CO-57", "03031J"};//international Designation}
 
-void Pred13t::setElements(tle_t x){
+void PredicThirteen::setElements(tle_t x){
 	elements = x;	
 }
 
@@ -221,12 +221,12 @@ float Sqr(float arg)
 	/* Returns square of a float */
 	return (arg*arg);
 }
-void Magnitude(Pred13t::vector_t *v)
+void Magnitude(PredicThirteen::vector_t *v)
 {
 	/* Calculates scalar magnitude of a vector_t argument */
 	v->w=sqrt(Sqr(v->x)+Sqr(v->y)+Sqr(v->z));
 }
-void Scale_Vector(float k, Pred13t::vector_t *v)
+void Scale_Vector(float k, PredicThirteen::vector_t *v)
 { 
 	/* Multiplies the vector v1 by the scalar k */
 	v->x*=k;
@@ -234,7 +234,7 @@ void Scale_Vector(float k, Pred13t::vector_t *v)
 	v->z*=k;
 	Magnitude(v);
 }
-void Convert_Sat_State(Pred13t::vector_t *pos, Pred13t::vector_t *vel)
+void Convert_Sat_State(PredicThirteen::vector_t *pos, PredicThirteen::vector_t *vel)
 {
 	/* Converts the satellite's position and velocity  */
 	/* vectors from normalized values to km and km/sec */ 
@@ -252,7 +252,7 @@ void printVar(char *name, float var)
       }
 }
 
-void printTle(Pred13t::tle_t *tle)
+void printTle(PredicThirteen::tle_t *tle)
 {
     //printf("Epoch year: %f Epoch day: %f\nDrag: %f\nDrag2: %f\nBstar: %f\nInclination: %f\n",
             //tle->epoch_year, tle->epoch_day,tle->xndt2o,tle->xndd6o,tle->bstar,tle->xincl);            
@@ -260,7 +260,7 @@ void printTle(Pred13t::tle_t *tle)
            // tle->xnodeo,tle->eo,tle->omegao,tle->xmo,tle->xno);
 }
 
-void select_ephemeris(Pred13t::tle_t *tle)
+void select_ephemeris(PredicThirteen::tle_t *tle)
 {
 	/* Selects the apropriate ephemeris type to be used */
 	/* for predictions according to the data in the TLE */
@@ -304,7 +304,7 @@ void select_ephemeris(Pred13t::tle_t *tle)
 }
 
 
-void SGP4(float tsince, Pred13t::tle_t * tle, Pred13t::vector_t * pos, Pred13t::vector_t * vel)
+void SGP4(float tsince, PredicThirteen::tle_t * tle, PredicThirteen::vector_t * pos, PredicThirteen::vector_t * vel)
 {
 	/* This function is used to calculate the position and velocity */
 	/* of near-earth (period < 225 minutes) satellites. tsince is   */
@@ -590,7 +590,7 @@ void SGP4(float tsince, Pred13t::tle_t * tle, Pred13t::vector_t * pos, Pred13t::
 	phase=FMod2p(phase);
 }
 
-void Calculate_LatLonAlt(uint64_t time, Pred13t::vector_t *pos,  Pred13t::geodetic_t *geodetic)
+void Calculate_LatLonAlt(uint64_t time, PredicThirteen::vector_t *pos,  PredicThirteen::geodetic_t *geodetic)
 {
 	/* Procedure Calculate_LatLonAlt will calculate the geodetic  */
 	/* position of an object given its ECI position pos and time. */
@@ -623,11 +623,11 @@ void Calculate_LatLonAlt(uint64_t time, Pred13t::vector_t *pos,  Pred13t::geodet
 		geodetic->lat-=twopi;
 }
 
-void printVector(Pred13t::vector_t *vec){
+void printVector(PredicThirteen::vector_t *vec){
     //printf("x: %f\ny: %f\nz: %f\nw: %f\n",vec->x, vec->y, vec->z, vec->w);
 }
 
-void printGeo(Pred13t::geodetic_t *geo){
+void printGeo(PredicThirteen::geodetic_t *geo){
     //printf("geo\nlat: %f\nlon: %f\nalt: %f\ntheta: %f\n",Degrees(geo->lat), Degrees(geo->lon), geo->alt, geo->theta);
 }
 
@@ -734,11 +734,11 @@ void setTime(float utams)
 
 }
 
-void calc(Pred13t::tle_t t){
-        Pred13t::vector_t zero_vector={0,0,0,0};
-        Pred13t::vector_t pos = zero_vector;
-        Pred13t::vector_t vel = zero_vector;
-	Pred13t::geodetic_t geo = {0,0,0,0};
+void PredicThirteen::calc(PredicThirteen::tle_t t){
+        PredicThirteen::vector_t zero_vector={0,0,0,0};
+        PredicThirteen::vector_t pos = zero_vector;
+        PredicThirteen::vector_t vel = zero_vector;
+	PredicThirteen::geodetic_t geo = {0,0,0,0};
 
         jul_utc = daynum +723244000000LL;
         jul_epoch=Julian_Date_of_Epoch(t.epoch_year, t.epoch_day);
@@ -764,7 +764,7 @@ void calc(Pred13t::tle_t t){
 	}
 	
 
-int main(){
+/*int main(){
     setTime(0);
     calc(co57);
 	////printf("Answer: %f\n", ThetaG_JD(2455343.50000));
@@ -772,4 +772,4 @@ int main(){
 	//modf(444.34, temp);
 	////printf("Done");
 
-}
+}*/
