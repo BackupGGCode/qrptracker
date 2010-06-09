@@ -367,6 +367,14 @@ void printVector(PredicThirteen::vector_t *vec){
    ////printf("x: %f\ny: %f\nz: %f\nw: %f\n",vec->x, vec->y, vec->z, vec->w);
 }
 
+void printUint64(char *name,uint64_t var){
+    Serial.print(name);
+    Serial.print(": (uint64)");
+    Serial.print((unsigned long)(var/1000000));
+    Serial.println((unsigned long)(var % 1000000));
+
+}
+
 
 void SGP4(float tsince, PredicThirteen::tle_t * tle, PredicThirteen::vector_t * pos, PredicThirteen::vector_t * vel)
 {
@@ -816,9 +824,9 @@ void PredicThirteen::calc(PredicThirteen::tle_t t){
         jul_utc = daynum +723244000000LL;
         jul_epoch=Julian_Date_of_Epoch(t.epoch_year, t.epoch_day);
         ////printf("jul_utc: %llu\njul_epoch: %llu\n", jul_utc, jul_epoch);
-        printVar("daynum", daynum);
-        printVar("jul_utc",jul_utc);
-        printVar("jul_epoch",jul_epoch);
+        printUint64("daynum", daynum);
+        printUint64("jul_utc",jul_utc);
+        printUint64("jul_epoch",jul_epoch);
         tsince =   ((jul_utc - jul_epoch)/1000000.0) * minday;
          
         ////printf("TimeSince: %f\nUnix: %f\n", tsince, seconds);
