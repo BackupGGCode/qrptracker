@@ -1,5 +1,5 @@
 #include <DateTimeStrings.h>
-#include <Pred13t.h>
+#include <PredicThirteen.h>
 #include <DateTime.h>
 #include <Math.h>
 #include <Ansiterm.h>
@@ -24,7 +24,7 @@
 boolean dateTimeStart = false;
 Ansiterm ansi;
 long timing;
-Pred13t predict;
+PredicThirteen predict;
 char * elements[NUMBER_OF_TLES][3]={
              {"CO-57",
              "1 27848U 03031J   10144.03510745  .00000045  00000-0  41505-4 0  80220",
@@ -51,8 +51,8 @@ char * elements[NUMBER_OF_TLES][3]={
 void setup() {
   Serial.begin(57600);
   Serial.println("Ok");
- predict.setTime(0);
- predict.calc(predict.co57);
+  predict.setTime(1276090238);
+  predict.calc(predict.co57);
 }
 
 void loop() {

@@ -7,11 +7,12 @@
  *  
  *
  */
-#include <stdint.h>
-#include <math.h>
-#include <stdio.h>
-#include <sys/time.h>
-//#include "WProgram.h"
+//#include <stdint.h>
+//#include <math.h>
+//#include <stdio.h>
+//#include <sys/time.h>
+#include "WProgram.h"
+#include "DateTime.h"
 
 #define xke		7.43669161E-2
 #define tothrd		6.6666666666666666E-1	/* 2/3 */
@@ -38,10 +39,7 @@
 #define DEEP_SPACE_EPHEM_FLAG  0x000040
 
 
-int static Flags=0;
-float static phase; 
-float usecs, tsince;
-uint64_t seconds, daynum, jul_utc, jul_epoch;
+
 
 class PredicThirteen {
 	public:
@@ -63,7 +61,9 @@ class PredicThirteen {
 		revnum;//reveloution Number at Epoch
 		char	   sat_name[25], idesg[9];//international Designation
 	}tle_t;
-	/* Geodetic position structure used by SGP4/SDP4 code. */
+        PredicThirteen::tle_t co57; 
+        
+        /* Geodetic position structure used by SGP4/SDP4 code. */
 	
 	typedef struct	{
 		float lat, lon, alt, theta;
@@ -103,7 +103,7 @@ class PredicThirteen {
 	void ClearFlag(int flag);
 	float FMod2p(float x);
 	//void SGP4(float tsince, PredicThirteen::tle_t * tle, PredicThirteen::vector_t * pos, PredicThirteen::vector_t * vel);
-        void setTime(float unixTimeAndMicroseconds);
+        void setTime(long sec);
         void calc(PredicThirteen::tle_t);
 
 
