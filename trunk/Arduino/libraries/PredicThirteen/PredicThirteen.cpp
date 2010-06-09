@@ -22,11 +22,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <time.h>
-#include "PredicThirteen_float.h"
+//#include <time.h>
+#include "PredicThirteen.h"
 //#include "WProgram.h"
 #define DEBUG false
 #define TEST false
+
+int static Flags=0;
+float static phase; 
+float usecs, tsince;
+long seconds;
+float daynum, jul_utc, jul_epoch;
 
 PredicThirteen::tle_t co57 = {10,
                  144.03510745,//ye, then time
@@ -42,7 +48,8 @@ PredicThirteen::tle_t co57 = {10,
 		3031, //Sat cat number
 		8022, // element set number
 		35761,//reveloution Number at Epoch
-		"CO-57", "03031J"};//international Designation}
+		"CO-57", "03031J"};//international Designation
+
 
 void PredicThirteen::setElements(tle_t x){
 	elements = x;	
@@ -241,23 +248,68 @@ void Convert_Sat_State(PredicThirteen::vector_t *pos, PredicThirteen::vector_t *
 	Scale_Vector(xkmper, pos);
 	Scale_Vector(xkmper*minday/secday, vel);
 }
+void printfloat( float val){
+  // prints val with number of decimal places determine by precision
+  // precision is a number from 0 to 6 indicating the desired decimial places
+  // example: printfloat( 3.1415, 2); // prints 3.14 (two decimal places)
+
+    int precision = 7;
+  Serial.print (int(val));  //prints the int part
+  if( precision > 0) {
+    Serial.print("."); // print the decimal point
+    unsigned long frac;
+    unsigned long mult = 1;
+    byte padding = precision -1;
+    while(precision--)
+	 mult *=10;
+
+    if(val >= 0)
+	frac = (val - int(val)) * mult;
+    else
+	frac = (int(val)- val ) * mult;
+    unsigned long frac1 = frac;
+    while( frac1 /= 10 )
+	padding--;
+    while(  padding--)
+	Serial.print("0");
+    Serial.println(frac,DEC) ;
+
+  }
+}
 
 void printVar(char *name, float var)
 {
-      if( fabs(var) > .000000001) {
-	//printf("%s: %f\n", name, var);
-      }
-      else {
-        //printf("%s: %fE-08\n", name, var*100000000);
-      }
+    Serial.print(name);
+    Serial.print(": ");
+    if((var - (int) var) == 0){
+        Serial.print("(int) ");
+        Serial.println(var);
+    }
+    else{
+        Serial.print("(float) ");
+        Serial.println(var *1000000);
+    }
+    //printfloat(var);
 }
 
 void printTle(PredicThirteen::tle_t *tle)
 {
-    //printf("Epoch year: %f Epoch day: %f\nDrag: %f\nDrag2: %f\nBstar: %f\nInclination: %f\n",
-            //tle->epoch_year, tle->epoch_day,tle->xndt2o,tle->xndd6o,tle->bstar,tle->xincl);            
-    //printf("RA: %f\nEO: %f\nOmega: %f\nXmo: %f\nXno: %f\n",
-           // tle->xnodeo,tle->eo,tle->omegao,tle->xmo,tle->xno);
+    Serial.print("Sizeof(epoch)");
+    Serial.println(sizeof(tle->epoch_year));
+/*    printVar("Epoch", tle->epoch_year * 1000 + tle->epoch_day);
+    printVar("Drag",tle->xndt2o);
+    printVar("Drag2",tle->xndd6o);
+    printVar("Bstar",tle->bstar);
+    printVar("Inclination",tle->xincl);
+    printVar("RA",tle->xnodeo);
+    printVar("EO",tle->eo);
+    printVar("Omega",tle->omegao);
+    printVar("Xmo",tle->xmo);
+    printVar("Xno",tle->xno);*/
+   //printf("Epoch: %f\nDrag: %f\nDrag2: %f\nBstar: %f\nInclination: %f\n",
+   //         tle->epoch,tle->xndt2o,tle->xndd6o,tle->bstar,tle->xincl);            
+   //printf("RA: %f\nEO: %f\nOmega: %f\nXmo: %f\nXno: %f\n",
+   //         tle->xnodeo,tle->eo,tle->omegao,tle->xmo,tle->xno);
 }
 
 void select_ephemeris(PredicThirteen::tle_t *tle)
@@ -624,12 +676,28 @@ void Calculate_LatLonAlt(uint64_t time, PredicThirteen::vector_t *pos,  PredicTh
 }
 
 void printVector(PredicThirteen::vector_t *vec){
-    //printf("x: %f\ny: %f\nz: %f\nw: %f\n",vec->x, vec->y, vec->z, vec->w);
+	Serial.print("x: ");
+	Serial.println(vec->x);
+	Serial.print("y: ");
+	Serial.println(vec->y);
+	Serial.print("z: ");
+	Serial.println(vec->z);
+	Serial.print("w:");
+	Serial.println(vec->w);
+   //printf("x: %f\ny: %f\nz: %f\nw: %f\n",vec->x, vec->y, vec->z, vec->w);
 }
 
 void printGeo(PredicThirteen::geodetic_t *geo){
-    //printf("geo\nlat: %f\nlon: %f\nalt: %f\ntheta: %f\n",Degrees(geo->lat), Degrees(geo->lon), geo->alt, geo->theta);
-}
+  		Serial.print("lat: ");
+		Serial.println(Degrees(geo->lat));
+		Serial.print("lon: ");
+		Serial.println(Degrees(geo->lon));
+		Serial.print("alt: ");
+		Serial.println(geo->alt);
+		Serial.print("theta: ");
+		Serial.println(geo->theta);
+	   //printf("lat: %f\nlon: %f\nalt: %f\ntheta: %f\n",Degrees(geo->lat), 360 -Degrees(geo->lon), geo->alt, geo->theta);
+	}
 
 uint64_t Julian_Date_of_Year(float year)
 {
@@ -646,15 +714,15 @@ uint64_t Julian_Date_of_Year(float year)
                 //printf("Year into JDoY: %f\n", year);
         year=year-1;
         i=year/100;
-        printVar("i", i);
+        //printVar("i", i);
         A=i;
         i=A/4;
         B=2-A+i;
-        printVar("B", B);
+        //printVar("B", B);
         i=365.25*year;
         i+=30.6001*14;
-        printVar("i", i);
-        printVar("B", B);
+        //printVar("i", i);
+       // printVar("B", B);
         out += i;
         out += B;
         //printf("out: %llu", out);
@@ -710,47 +778,36 @@ uint64_t Julian_Date_of_Epoch(float epoch_year, float epoch_day)
 }
 /* Sets the time to specified time. Format is standard Unix time, seconds    */
 /*   from epoch plus microseconds.                                           */
-void setTime(float utams)
+void PredicThirteen::setTime(long sec)
 {
-    time_t curtime;
-    curtime = time (NULL);
     //printf("curtime: %f\n", curtime);
-    seconds =  curtime; //utams;
-    if (utams <= 0)
-    {
-     //   struct timeval tptr;
-
-     //   gettimeofday(&tptr, NULL);
-
-       // usecs = 0.000001*(float)tptr.tv_usec;
-       // seconds = usecs + (float) tptr.tv_sec;
-   	//seconds = 1275395947.0; 
-    }
+    seconds =  sec; //utams;
     //orig. daynum *E6
     daynum = seconds *10000/864LL - (3651000000LL);
-    //printf("daynum: %llu\n", daynum);
-
+    Serial.print("seconds: ");
+    Serial.println(seconds);
 
 
 }
 
 void PredicThirteen::calc(PredicThirteen::tle_t t){
+        printTle(&co57);
         PredicThirteen::vector_t zero_vector={0,0,0,0};
         PredicThirteen::vector_t pos = zero_vector;
         PredicThirteen::vector_t vel = zero_vector;
 	PredicThirteen::geodetic_t geo = {0,0,0,0};
 
         jul_utc = daynum +723244000000LL;
-        jul_epoch=Julian_Date_of_Epoch(t.epoch_year, t.epoch_day);
+        jul_epoch=Julian_Date_of_Epoch(co57.epoch_year, co57.epoch_day);
         //printf("jul_utc: %llu\njul_epoch: %llu\n", jul_utc, jul_epoch);
         tsince =   ((jul_utc - jul_epoch)/1000000.0) * minday;
          
         //printf("TimeSince: %f\nUnix: %f\n", tsince, seconds);
         //printf("TimeLatLong: %llu\n", jul_utc);
 
-        select_ephemeris(&t);
+        select_ephemeris(&co57);
     
-	SGP4(tsince, &t, &pos, &vel);
+	SGP4(tsince, &co57, &pos, &vel);
 	Convert_Sat_State(&pos, &vel);   
 	Magnitude(&vel);        
         printVar("jul_utc", jul_utc);
