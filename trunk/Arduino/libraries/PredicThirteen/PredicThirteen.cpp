@@ -32,7 +32,7 @@ int static Flags=0;
 float static phase; 
 float usecs, tsince;
 long seconds;
-float daynum, jul_utc, jul_epoch;
+uint64_t daynum, jul_utc, jul_epoch;
 
 PredicThirteen::tle_t co57 = {10,
                  144.03510745,//ye, then time
@@ -172,34 +172,35 @@ float ThetaG_JD(uint64_t jde6)
         D = 6.2E-6 * CONST;
 	jd= (long)(jde6 / CONST);
 	uint64_t dummy = 714861;
-	//printf("%llu divided by 1000000 = %f\n", dummy, dummy/1000000.0);
+	////printf("%llu divided by 1000000 = %f\n", dummy, dummy/1000000.0);
 	uint64_t dumbval = 0LL+(uint64_t)jde6 - (uint64_t)jd*CONST;
-	//printf("dumbval: %llu\n", dumbval);
+	////printf("dumbval: %llu\n", dumbval);
         UT = dumbval/ (float)1000000.0;
-	//printf("!!numerator: %llu\n", jde6 - (uint64_t)jd*CONST);
-        //printf("jd1: %f\n", jd);
-	//printf("jdLL1: %llu\n", (uint64_t)jd* CONST);
-	//printf("jde6: %llu\n", jde6);
-	//printf("UT: %f\n",UT);
+	////printf("!!numerator: %llu\n", jde6 - (uint64_t)jd*CONST);
+        ////printf("jd1: %f\n", jd);
+	////printf("jdLL1: %llu\n", (uint64_t)jd* CONST);
+	////printf("jde6: %llu\n", jde6);
+	////printf("UT: %f\n",UT);
 	TU=(jd-730550.5)/36525;
-	//printf("%s: %f\n", "TU", TU);
+	////printf("%s: %f\n", "TU", TU);
 	uint64_t GMSTLLU = A + TU*B + TU*TU*C - TU*TU*TU*D;
         GMST =( A + TU*B + TU*TU*C - TU*TU*TU*D) / CONST;
-	//printf("gmstllu: %llu\n", GMSTLLU);
-        //printf("gmst1: %f\n", GMST);	
+	////printf("gmstllu: %llu\n", GMSTLLU);
+        ////printf("gmst1: %f\n", GMST);	
 	uint64_t additives = secday*omega_E*UT*CONST;
 	uint64_t secdayLLU = secday*CONST;
 	uint64_t temp = GMSTLLU + additives;
-	//printf("%llu mod %llu is %llu\n",GMSTLLU,secdayLLU,GMSTLLU % secdayLLU);
-	//printf("secday: %f\nomega_E: %f\nUT: %f\nadditives: %f\n",secday,omega_E,UT, additives/1000000.0);
-	//printf("temp: %llu\n", temp);
-	//printf("secdayLLU: %llu\n", secdayLLU);
+	////printf("%llu mod %llu is %llu\n",GMSTLLU,secdayLLU,GMSTLLU % secdayLLU);
+	////printf("secday: %f\nomega_E: %f\nUT: %f\nadditives: %f\n",secday,omega_E,UT, additives/1000000.0);
+	////printf("temp: %llu\n", temp);
+	////printf("secdayLLU: %llu\n", secdayLLU);
 	GMST = (temp % secdayLLU) / 1000000.0;
-	//printf("gmstMOD: %f\n", GMST);
+	////printf("gmstMOD: %f\n", GMST);
 //	GMST=Modulus(GMST+secday*omega_E*UT,secday);
-        //printf("gmst2: %f\n", GMST);
+        ////printf("gmst2: %f\n", GMST);
 	thetag = (twopi*GMST/secday);
-        //printf("thetag: %f\n", thetag);
+
+        ////printf("thetag: %f\n", thetag);
         return   thetag;
 }
 /*
@@ -210,16 +211,16 @@ float ThetaG_JD(float jd)
         float UT=0, TU=0, GMST=0;
         float thetag;
         UT=Frac(jd);//+0.5);
-        //printf("UT: %f\n", UT);
+        ////printf("UT: %f\n", UT);
         jd=jd-UT;
-        //printf("jd: %f\n", jd);
+        ////printf("jd: %f\n", jd);
         TU=(jd-730550.5)/36525;
-        //printf("%s: %f\n", "TU", TU);
+        ////printf("%s: %f\n", "TU", TU);
         GMST=24110.54841+TU*(8640184.812866+TU*(0.093104-TU*6.2E-6));
         GMST=Modulus(GMST+secday*omega_E*UT,secday);
 
         thetag = (twopi*GMST/secday);
-        //printf("thetag: %f\n", thetag);
+        ////printf("thetag: %f\n", thetag);
         return thetag;
 }
 */
@@ -251,12 +252,12 @@ void Convert_Sat_State(PredicThirteen::vector_t *pos, PredicThirteen::vector_t *
 void printfloat( float val){
   // prints val with number of decimal places determine by precision
   // precision is a number from 0 to 6 indicating the desired decimial places
-  // example: printfloat( 3.1415, 2); // prints 3.14 (two decimal places)
+  // example: //printfloat( 3.1415, 2); // //prints 3.14 (two decimal places)
 
     int precision = 7;
-  Serial.print (int(val));  //prints the int part
+  Serial.print (int(val));  ////prints the int part
   if( precision > 0) {
-    Serial.print("."); // print the decimal point
+    Serial.print("."); // //print the decimal point
     unsigned long frac;
     unsigned long mult = 1;
     byte padding = precision -1;
@@ -287,16 +288,15 @@ void printVar(char *name, float var)
     }
     else{
         Serial.print("(float) ");
-        Serial.println(var *1000000);
+        //Serial.println(var *1000000);
+        printfloat(var);
     }
-    //printfloat(var);
+    ////printfloat(var);
 }
 
 void printTle(PredicThirteen::tle_t *tle)
 {
-    Serial.print("Sizeof(epoch)");
-    Serial.println(sizeof(tle->epoch_year));
-/*    printVar("Epoch", tle->epoch_year * 1000 + tle->epoch_day);
+    printVar("Epoch", tle->epoch_year * 1000 + tle->epoch_day);
     printVar("Drag",tle->xndt2o);
     printVar("Drag2",tle->xndd6o);
     printVar("Bstar",tle->bstar);
@@ -305,10 +305,10 @@ void printTle(PredicThirteen::tle_t *tle)
     printVar("EO",tle->eo);
     printVar("Omega",tle->omegao);
     printVar("Xmo",tle->xmo);
-    printVar("Xno",tle->xno);*/
-   //printf("Epoch: %f\nDrag: %f\nDrag2: %f\nBstar: %f\nInclination: %f\n",
+    printVar("Xno",tle->xno);
+   ////printf("Epoch: %f\nDrag: %f\nDrag2: %f\nBstar: %f\nInclination: %f\n",
    //         tle->epoch,tle->xndt2o,tle->xndd6o,tle->bstar,tle->xincl);            
-   //printf("RA: %f\nEO: %f\nOmega: %f\nXmo: %f\nXno: %f\n",
+   ////printf("RA: %f\nEO: %f\nOmega: %f\nXmo: %f\nXno: %f\n",
    //         tle->xnodeo,tle->eo,tle->omegao,tle->xmo,tle->xno);
 }
 
@@ -328,14 +328,14 @@ void select_ephemeris(PredicThirteen::tle_t *tle)
 	tle->xincl*=deg2rad;
 	temp=twopi/minday/minday;
 	tle->xno=tle->xno*temp*minday;
-    printVar("xno", tle->xno);
+        //printVar("xno", tle->xno);
 	tle->xndt2o*=temp;
 	tle->xndd6o=tle->xndd6o*temp/minday;
 	tle->bstar/=ae;
 
 	/* Period > 225 minutes is deep space */
 	dd1=(xke/tle->xno);
-    printVar("dd1", dd1);
+    //printVar("dd1", dd1);
 	dd2=tothrd;
 	a1=pow(dd1,dd2);
 	r1=cos(tle->xincl);
@@ -353,6 +353,18 @@ void select_ephemeris(PredicThirteen::tle_t *tle)
 		SetFlag(DEEP_SPACE_EPHEM_FLAG);
 	else
 		ClearFlag(DEEP_SPACE_EPHEM_FLAG);
+}
+
+void printVector(PredicThirteen::vector_t *vec){
+	Serial.print("x: ");
+	Serial.println(vec->x);
+	Serial.print("y: ");
+	Serial.println(vec->y);
+	Serial.print("z: ");
+	Serial.println(vec->z);
+	Serial.print("w:");
+	Serial.println(vec->w);
+   ////printf("x: %f\ny: %f\nz: %f\nw: %f\n",vec->x, vec->y, vec->z, vec->w);
 }
 
 
@@ -380,7 +392,8 @@ void SGP4(float tsince, PredicThirteen::tle_t * tle, PredicThirteen::vector_t * 
 	temp3, temp4, temp5, temp6, theta2, theta4, tsi;
 	
 	int i;
-
+        
+        Serial.println("----------------------------------------");
         printTle(tle);
         
 	
@@ -396,7 +409,7 @@ void SGP4(float tsince, PredicThirteen::tle_t * tle, PredicThirteen::vector_t * 
 		a1=pow(xke/tle->xno,tothrd);
 		printVar("a1", a1);
 		cosio=cos(tle->xincl);
-        printVar("Tle->xincl", tle->xincl);
+                printVar("Tle->xincl", tle->xincl);
 		theta2=cosio*cosio;
 		x3thm1=3*theta2-1.0;
 		printVar("theta2",theta2);
@@ -410,7 +423,8 @@ void SGP4(float tsince, PredicThirteen::tle_t * tle, PredicThirteen::vector_t * 
 		xnodp=tle->xno/(1.0+delo);
 		aodp=ao/(1.0-delo);
 
-        printVar("aodp", aodp);
+                printVar("aodp", aodp);
+        Serial.println("----------------------------------------");        
 
 		
 		/* For perigee less than 220 kilometers, the "simple"     */
@@ -443,6 +457,8 @@ void SGP4(float tsince, PredicThirteen::tle_t * tle, PredicThirteen::vector_t * 
 			qoms24=pow((120-s4)*ae/xkmper,4);
 			s4=s4/xkmper+ae;
 		}
+        Serial.println("----------------------------------------");
+        
 		
 		pinvsq=1/(aodp*aodp*betao2*betao2);
 		tsi=1/(aodp-s4);
@@ -464,13 +480,16 @@ void SGP4(float tsince, PredicThirteen::tle_t * tle, PredicThirteen::vector_t * 
 		printVar("x3thm1",x3thm1);
 		printVar("c2",c2);
 		c1=tle->bstar*c2;
-		printVar("c1",c1);
-        printVar("BSTAR: ", tle->bstar);
+		printVar("c1*1000000",c1*1000000);
+                printVar("BSTAR: ", tle->bstar);
 		sinio=sin(tle->xincl);
 		a3ovk2=-xj3/ck2*pow(ae,3);
 		c3=coef*tsi*a3ovk2*xnodp*ae*sinio/tle->eo;
 		x1mth2=1-theta2;
 		printVar("x1mth2", x1mth2);
+        Serial.println("----------------------------------------");
+        Serial.println("----------------------------------------");
+        
 		
 		c4=2*xnodp*coef1*aodp*betao2*(eta*(2+0.5*etasq)+tle->eo*(0.5+2*etasq)-2*ck2*tsi/(aodp*psisq)*(-3*x3thm1*(1-2*eeta+etasq*(1.5-0.5*eeta))+0.75*x1mth2*(2*etasq-eeta*(1+etasq))*cos(2*tle->omegao)));
 		c5=2*coef1*aodp*betao2*(1+2.75*(etasq+eeta)+eeta*etasq);
@@ -488,7 +507,7 @@ void SGP4(float tsince, PredicThirteen::tle_t * tle, PredicThirteen::vector_t * 
 		xmcof=-tothrd*coef*tle->bstar*ae/eeta;
 		xnodcf=3.5*betao2*xhdot1*c1;
 		t2cof=1.5*c1;
-        printVar("t2cof", t2cof);
+                printVar("t2cof*1000000", t2cof*1000000);
 		xlcof=0.125*a3ovk2*sinio*(3+5*cosio)/(1+cosio);
 		aycof=0.25*a3ovk2*sinio;
 		delmo=pow(1+eta*cos(tle->xmo),3);
@@ -516,6 +535,7 @@ void SGP4(float tsince, PredicThirteen::tle_t * tle, PredicThirteen::vector_t * 
 	omega=omgadf;
 	xmp=xmdf;
 	tsq=tsince*tsince;
+        printVar("tsince*1000000", tsince*1000000);
 	printVar("tsq", tsq);        
 
 	xnode=xnoddf+xnodcf*tsq;
@@ -629,7 +649,12 @@ void SGP4(float tsince, PredicThirteen::tle_t * tle, PredicThirteen::vector_t * 
 	vel->x=rdotk*ux+rfdotk*vx;
 	vel->y=rdotk*uy+rfdotk*vy;
 	vel->z=rdotk*uz+rfdotk*vz;
-
+        
+        Serial.println("----------------------------------------");
+        Serial.print("Position: ");
+        printVector(pos);
+        Serial.print("Velocity; ");
+        printVector(vel);
         //printf("1st Position: (%f,%f,%f,%f)\n", pos->x,pos->y,pos->z,pos->w);
         //printf("1st Velocity: (%f,%f,%f,%f)\n)", vel->x,vel->y,vel->z,vel->w);        
 	
@@ -657,7 +682,7 @@ void Calculate_LatLonAlt(uint64_t time, PredicThirteen::vector_t *pos,  PredicTh
 	geodetic->theta=AcTan(pos->y,pos->x); /* radians */
 	geodetic->lon=FMod2p(geodetic->theta-ThetaG_JD(time)); /* radians */
 	r=sqrt(Sqr(pos->x)+Sqr(pos->y));
-        printVar("r", r);
+        //printVar("r", r);
 	e2=f*(2-f);
 	geodetic->lat=AcTan(pos->z,r); /* radians */
 
@@ -675,17 +700,7 @@ void Calculate_LatLonAlt(uint64_t time, PredicThirteen::vector_t *pos,  PredicTh
 		geodetic->lat-=twopi;
 }
 
-void printVector(PredicThirteen::vector_t *vec){
-	Serial.print("x: ");
-	Serial.println(vec->x);
-	Serial.print("y: ");
-	Serial.println(vec->y);
-	Serial.print("z: ");
-	Serial.println(vec->z);
-	Serial.print("w:");
-	Serial.println(vec->w);
-   //printf("x: %f\ny: %f\nz: %f\nw: %f\n",vec->x, vec->y, vec->z, vec->w);
-}
+
 
 void printGeo(PredicThirteen::geodetic_t *geo){
   		Serial.print("lat: ");
@@ -696,7 +711,7 @@ void printGeo(PredicThirteen::geodetic_t *geo){
 		Serial.println(geo->alt);
 		Serial.print("theta: ");
 		Serial.println(geo->theta);
-	   //printf("lat: %f\nlon: %f\nalt: %f\ntheta: %f\n",Degrees(geo->lat), 360 -Degrees(geo->lon), geo->alt, geo->theta);
+	   ////printf("lat: %f\nlon: %f\nalt: %f\ntheta: %f\n",Degrees(geo->lat), 360 -Degrees(geo->lon), geo->alt, geo->theta);
 	}
 
 uint64_t Julian_Date_of_Year(float year)
@@ -711,21 +726,21 @@ uint64_t Julian_Date_of_Year(float year)
         uint64_t out = 0LL;
         long A, B, i;
         float jdoy;
-                //printf("Year into JDoY: %f\n", year);
+                ////printf("Year into JDoY: %f\n", year);
         year=year-1;
         i=year/100;
-        //printVar("i", i);
+        ////printVar("i", i);
         A=i;
         i=A/4;
         B=2-A+i;
-        //printVar("B", B);
+        ////printVar("B", B);
         i=365.25*year;
         i+=30.6001*14;
-        //printVar("i", i);
-       // printVar("B", B);
+        ////printVar("i", i);
+       // //printVar("B", B);
         out += i;
         out += B;
-        //printf("out: %llu", out);
+        ////printf("out: %llu", out);
         return out;
 }
 /*
@@ -733,7 +748,7 @@ uint64_t  Julian_Date_of_Year(float year)
 {
 	long A, B, i;
 	float jdoy;
-        //printf("Year into JDoY: %f\n", year);
+        ////printf("Year into JDoY: %f\n", year);
 	year=year-1;
 	i=year/100;
 	A=i;
@@ -769,10 +784,10 @@ uint64_t Julian_Date_of_Epoch(float epoch_year, float epoch_day)
 
 //	return (Julian_Date_of_Year(year)+day);
         uint64_t jdy = Julian_Date_of_Year(epoch_year + 2000);
-        //printf("jdy: %llu\n", jdy);
+        ////printf("jdy: %llu\n", jdy);
         uint64_t yearPart = Julian_Date_of_Year(epoch_year + 2000)*1000000LL;
         uint64_t dayPart = epoch_day*1000000LL;
-        //printf("yearPart: %llu\ndayPart: %llu\n",yearPart,dayPart);
+        ////printf("yearPart: %llu\ndayPart: %llu\n",yearPart,dayPart);
         return yearPart + dayPart;
 	//return (Julian_Date_of_Year(epoch_year + 2000)*1000000LL + epoch_day*1000000LL);
 }
@@ -780,7 +795,7 @@ uint64_t Julian_Date_of_Epoch(float epoch_year, float epoch_day)
 /*   from epoch plus microseconds.                                           */
 void PredicThirteen::setTime(long sec)
 {
-    //printf("curtime: %f\n", curtime);
+    ////printf("curtime: %f\n", curtime);
     seconds =  sec; //utams;
     //orig. daynum *E6
     daynum = seconds *10000/864LL - (3651000000LL);
@@ -791,32 +806,36 @@ void PredicThirteen::setTime(long sec)
 }
 
 void PredicThirteen::calc(PredicThirteen::tle_t t){
-        printTle(&co57);
+        printTle(&t);
+        Serial.println("----------------------------------------");
         PredicThirteen::vector_t zero_vector={0,0,0,0};
         PredicThirteen::vector_t pos = zero_vector;
         PredicThirteen::vector_t vel = zero_vector;
 	PredicThirteen::geodetic_t geo = {0,0,0,0};
 
         jul_utc = daynum +723244000000LL;
-        jul_epoch=Julian_Date_of_Epoch(co57.epoch_year, co57.epoch_day);
-        //printf("jul_utc: %llu\njul_epoch: %llu\n", jul_utc, jul_epoch);
+        jul_epoch=Julian_Date_of_Epoch(t.epoch_year, t.epoch_day);
+        ////printf("jul_utc: %llu\njul_epoch: %llu\n", jul_utc, jul_epoch);
+        printVar("daynum", daynum);
+        printVar("jul_utc",jul_utc);
+        printVar("jul_epoch",jul_epoch);
         tsince =   ((jul_utc - jul_epoch)/1000000.0) * minday;
          
-        //printf("TimeSince: %f\nUnix: %f\n", tsince, seconds);
-        //printf("TimeLatLong: %llu\n", jul_utc);
+        ////printf("TimeSince: %f\nUnix: %f\n", tsince, seconds);
+        ////printf("TimeLatLong: %llu\n", jul_utc);
 
-        select_ephemeris(&co57);
+        select_ephemeris(&t);
     
-	SGP4(tsince, &co57, &pos, &vel);
+	SGP4(tsince, &t, &pos, &vel);
 	Convert_Sat_State(&pos, &vel);   
 	Magnitude(&vel);        
-        printVar("jul_utc", jul_utc);
+        //printVar("jul_utc", jul_utc);
 	Calculate_LatLonAlt(jul_utc, &pos, &geo);
-        //printf("Position\n");
+        ////printf("Position\n");
         printVector(&pos);
-        //printf("Velocity:\n");
+        ////printf("Velocity:\n");
         printVector(&vel);
-        //printf("Geo:\n");
+        ////printf("Geo:\n");
         printGeo(&geo);
 	}
 	
@@ -824,9 +843,9 @@ void PredicThirteen::calc(PredicThirteen::tle_t t){
 /*int main(){
     setTime(0);
     calc(co57);
-	////printf("Answer: %f\n", ThetaG_JD(2455343.50000));
+	//////printf("Answer: %f\n", ThetaG_JD(2455343.50000));
 	//float *temp = new float;
 	//modf(444.34, temp);
-	////printf("Done");
+	//////printf("Done");
 
 }*/

@@ -45,8 +45,8 @@ class PredicThirteen {
 	public:
 	
 	typedef struct {
-		float  epoch_year,//ye, then time
-                epoch_day,
+		int epoch_year;//ye, then time
+                float epoch_day,
 		xndt2o,//ndot/2 drag parameter
 		xndd6o,//n float dot/6 Drag Parameter
 		bstar, //bstar drag parameter
