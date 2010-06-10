@@ -41,70 +41,53 @@
 
 
 
+
 class PredicThirteen {
-	public:
-	
-	typedef struct {
-		int epoch_year;//ye, then time
-                float epoch_day,
-		xndt2o,//ndot/2 drag parameter
-		xndd6o,//n float dot/6 Drag Parameter
-		bstar, //bstar drag parameter
-		xincl,//inclination IN
-		xnodeo, //RA
-		eo,//eccentricity EC
-		omegao, //WP
-		xmo,//mean anomaly MA
-		xno;//mean motion MM
-		int	   catnr, //Sat cat number
-		elset, // element set number
-		revnum;//reveloution Number at Epoch
-		char	   sat_name[25], idesg[9];//international Designation
-	}tle_t;
-        PredicThirteen::tle_t co57; 
+    public:
+
+        typedef struct {
+            int epoch_year;//ye, then time
+            float epoch_day,
+                  xndt2o,//ndot/2 drag parameter
+                  xndd6o,//n float dot/6 Drag Parameter
+                  bstar, //bstar drag parameter
+                  xincl,//inclination IN
+                  xnodeo, //RA
+                  eo,//eccentricity EC
+                  omegao, //WP
+                  xmo,//mean anomaly MA
+                  xno;//mean motion MM
+            int	   catnr, //Sat cat number
+                   elset, // element set number
+                   revnum;//reveloution Number at Epoch
+            char	   sat_name[25], idesg[9];//international Designation
+        }tle_t;
         
+        PredicThirteen::tle_t co57; 
+
         /* Geodetic position structure used by SGP4/SDP4 code. */
-	
-	typedef struct	{
-		float lat, lon, alt, theta;
-	}  geodetic_t;
-	typedef struct {
-		char line1[70];
-		char line2[70];
-		char name[25];
-		long catnum;
-		long setnum;
-		char designator[10];
-		int year;
-		float refepoch;
-		float incl;
-		float raan;
-		float eccn;
-		float argper;
-		float meanan;
-		float meanmo;
-		float drag;
-		float nddot6;
-		float bstar;
-		long orbitnum;
-	}sat;
-	/* General three-dimensional vector structure used by SGP4/SDP4 code. */
-	
-	typedef struct	{
-		float x, y, z, w;
-	}  vector_t;
-	
-	
-	PredicThirteen::tle_t elements;
-	
-	void setElements(PredicThirteen::tle_t);
-	int isFlagClear(int flag);
-	void SetFlag(int flag);
-	void ClearFlag(int flag);
-	float FMod2p(float x);
-	//void SGP4(float tsince, PredicThirteen::tle_t * tle, PredicThirteen::vector_t * pos, PredicThirteen::vector_t * vel);
+
+        typedef struct	{
+            float lat, lon, alt, theta;
+        }  geodetic_t;
+        /* General three-dimensional vector structure used by SGP4/SDP4 code. */
+
+        typedef struct	{
+            float x, y, z, w;
+        }  vector_t;
+
+        float LAT,LON;
+        PredicThirteen::tle_t elements;
+
+        void setElements(PredicThirteen::tle_t);
+        int isFlagClear(int flag);
+        void SetFlag(int flag);
+        void ClearFlag(int flag);
+        float FMod2p(float x);
+        //void SGP4(float tsince, PredicThirteen::tle_t * tle, PredicThirteen::vector_t * pos, PredicThirteen::vector_t * vel);
         void setTime(long sec);
         void calc(PredicThirteen::tle_t);
+        void printFloat(float val);
 
 
 };
