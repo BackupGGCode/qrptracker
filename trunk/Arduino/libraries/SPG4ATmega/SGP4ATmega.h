@@ -1,5 +1,5 @@
 /*
- *  PredicThirteen.h
+ *  SGP4ATmega.h
  *  
  *
  *  Created by Andrew Edmunds on 10-05-26.
@@ -42,7 +42,7 @@
 
 
 
-class PredicThirteen {
+class SGP4ATmega {
     public:
 
         typedef struct {
@@ -63,7 +63,7 @@ class PredicThirteen {
             char	   sat_name[25], idesg[9];//international Designation
         }tle_t;
         
-        PredicThirteen::tle_t co57; 
+        SGP4ATmega::tle_t co57; 
 
         /* Geodetic position structure used by SGP4/SDP4 code. */
 
@@ -77,16 +77,16 @@ class PredicThirteen {
         }  vector_t;
 
         float LAT,LON;
-        PredicThirteen::tle_t elements;
+        SGP4ATmega::tle_t elements;
 
-        void setElements(PredicThirteen::tle_t);
+        void setElements(SGP4ATmega::tle_t);
         int isFlagClear(int flag);
         void SetFlag(int flag);
         void ClearFlag(int flag);
         float FMod2p(float x);
-        //void SGP4(float tsince, PredicThirteen::tle_t * tle, PredicThirteen::vector_t * pos, PredicThirteen::vector_t * vel);
+        //void SGP4(float tsince, SGP4ATmega::tle_t * tle, SGP4ATmega::vector_t * pos, SGP4ATmega::vector_t * vel);
         void setTime(long sec);
-        PredicThirteen::geodetic_t calc(PredicThirteen::tle_t);
+		void calc(SGP4ATmega::tle_t, SGP4ATmega::geodetic_t *geo);
 
 
 };
