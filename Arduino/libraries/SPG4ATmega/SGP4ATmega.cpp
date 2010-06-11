@@ -1,5 +1,5 @@
 /* 
- *  PredicThirteen.cpp
+ *  SGP4ATmega.cpp
  *  
  *
  *  Created by Andrew Edmunds on 10-05-26.
@@ -22,7 +22,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include "PredicThirteen.h"
+#include "SGP4ATmega.h"
 //#define DEBUG
 
 #ifdef DEBUG
@@ -43,24 +43,24 @@ uint64_t daynum, jul_utc, jul_epoch;
 
 
 
-PredicThirteen::tle_t co57 = {10,
-    144.03510745,//ye, then time
-    .00000045,//ndot/2 drag parameter
-    00000.0,//n float dot/6 Drag Parameter
-    0.000042, //bstar drag parameter
-    98.7132,//inclination IN
-    152.4464, //RA
-    .000873,//eccentricity EC
-    245.714100, //WP
-    114.3119,//mean anomaly MA
-    14.20500354,//mean motion MM
-    3031, //Sat cat number
-    8022, // element set number
-    35761,//reveloution Number at Epoch
-    "CO-57", "03031J"};//international Designation
+//SGP4ATmega::tle_t co57 = {10,
+//    144.03510745,//ye, then time
+//    .00000045,//ndot/2 drag parameter
+//    00000.0,//n float dot/6 Drag Parameter
+//    0.000042, //bstar drag parameter
+//    98.7132,//inclination IN
+//    152.4464, //RA
+//    .000873,//eccentricity EC
+//    245.714100, //WP
+//    114.3119,//mean anomaly MA
+//    14.20500354,//mean motion MM
+//    3031, //Sat cat number
+//    8022, // element set number
+//    35761,//reveloution Number at Epoch
+//    "CO-57", "03031J"};//international Designation
 
 
-void PredicThirteen::setElements(tle_t x){
+void SGP4ATmega::setElements(tle_t x){
     elements = x;	
 }
 
@@ -216,12 +216,12 @@ float Sqr(float arg)
     /* Returns square of a float */
     return (arg*arg);
 }
-void Magnitude(PredicThirteen::vector_t *v)
+void Magnitude(SGP4ATmega::vector_t *v)
 {
     /* Calculates scalar magnitude of a vector_t argument */
     v->w=sqrt(Sqr(v->x)+Sqr(v->y)+Sqr(v->z));
 }
-void Scale_Vector(float k, PredicThirteen::vector_t *v)
+void Scale_Vector(float k, SGP4ATmega::vector_t *v)
 { 
     /* Multiplies the vector v1 by the scalar k */
     v->x*=k;
@@ -229,7 +229,7 @@ void Scale_Vector(float k, PredicThirteen::vector_t *v)
     v->z*=k;
     Magnitude(v);
 }
-void Convert_Sat_State(PredicThirteen::vector_t *pos, PredicThirteen::vector_t *vel)
+void Convert_Sat_State(SGP4ATmega::vector_t *pos, SGP4ATmega::vector_t *vel)
 {
     /* Converts the satellite's position and velocity  */
     /* vectors from normalized values to km and km/sec */ 
@@ -279,7 +279,7 @@ void printVar(char *name, float var)
     }
 }
 
-void printTle(PredicThirteen::tle_t *tle)
+void printTle(SGP4ATmega::tle_t *tle)
 {
     printVar("Epoch", tle->epoch_year * 1000 + tle->epoch_day);
     printVar("Drag",tle->xndt2o);
@@ -293,7 +293,7 @@ void printTle(PredicThirteen::tle_t *tle)
     printVar("Xno",tle->xno);
 }
 
-void select_ephemeris(PredicThirteen::tle_t *tle)
+void select_ephemeris(SGP4ATmega::tle_t *tle)
 {
     /* Selects the apropriate ephemeris type to be used */
     /* for predictions according to the data in the TLE */
@@ -336,7 +336,7 @@ void select_ephemeris(PredicThirteen::tle_t *tle)
         ClearFlag(DEEP_SPACE_EPHEM_FLAG);
 }
 
-void printVector(PredicThirteen::vector_t *vec){
+void printVector(SGP4ATmega::vector_t *vec){
     DEBUG_PRINT("x: ");
     DEBUG_PRINTLN(vec->x);
     DEBUG_PRINT("y: ");
@@ -356,7 +356,7 @@ void printUint64(char *name,uint64_t var){
 }
 
 
-void SGP4(float tsince, PredicThirteen::tle_t * tle, PredicThirteen::vector_t * pos, PredicThirteen::vector_t * vel)
+void SGP4(float tsince, SGP4ATmega::tle_t * tle, SGP4ATmega::vector_t * pos, SGP4ATmega::vector_t * vel)
 {
     /* This function is used to calculate the position and velocity */
     /* of near-earth (period < 225 minutes) satellites. tsince is   */
@@ -653,7 +653,7 @@ void SGP4(float tsince, PredicThirteen::tle_t * tle, PredicThirteen::vector_t * 
     phase=FMod2p(phase);
 }
 
-void Calculate_LatLonAlt(uint64_t time, PredicThirteen::vector_t *pos,  PredicThirteen::geodetic_t *geodetic)
+void Calculate_LatLonAlt(uint64_t time, SGP4ATmega::vector_t *pos,  SGP4ATmega::geodetic_t *geodetic)
 {
     /* Procedure Calculate_LatLonAlt will calculate the geodetic  */
     /* position of an object given its ECI position pos and time. */
@@ -687,15 +687,15 @@ void Calculate_LatLonAlt(uint64_t time, PredicThirteen::vector_t *pos,  PredicTh
 
 
 
-void printGeo(PredicThirteen::geodetic_t *geo){
-    Serial.print("lat: ");
-    Serial.println(Degrees(geo->lat));
-    Serial.print("lon: ");
-    Serial.println(Degrees(geo->lon));
-    Serial.print("alt: ");
-    Serial.println(geo->alt);
-    Serial.print("theta: ");
-    Serial.println(geo->theta);
+void printGeo(SGP4ATmega::geodetic_t *geo){
+    DEBUG_PRINT("lat: ");
+    DEBUG_PRINTLN(Degrees(geo->lat));  
+    DEBUG_PRINT("lon: ");
+    DEBUG_PRINTLN(Degrees(geo->lon));
+    DEBUG_PRINT("alt: ");
+    DEBUG_PRINTLN(geo->alt);
+    DEBUG_PRINT("theta: ");
+    DEBUG_PRINTLN(geo->theta);
 }
 
 uint64_t Julian_Date_of_Year(float year)
@@ -771,7 +771,7 @@ uint64_t Julian_Date_of_Epoch(float epoch_year, float epoch_day)
 }
 /* Sets the time to specified time. Format is standard Unix time, seconds    */
 /*   from epoch plus microseconds.                                           */
-void PredicThirteen::setTime(long sec)
+void SGP4ATmega::setTime(long sec)
 {
     seconds =  sec; //utams;
     //orig. daynum *E7
@@ -782,13 +782,12 @@ void PredicThirteen::setTime(long sec)
 
 }
 
-PredicThirteen::geodetic_t PredicThirteen::calc(PredicThirteen::tle_t t){
+void SGP4ATmega::calc(SGP4ATmega::tle_t t, SGP4ATmega::geodetic_t *geo){
     printTle(&t);
     DEBUG_PRINTLN("----------------------------------------");
-    PredicThirteen::vector_t zero_vector={0,0,0,0};
-    PredicThirteen::vector_t pos = zero_vector;
-    PredicThirteen::vector_t vel = zero_vector;
-    PredicThirteen::geodetic_t geo = {0,0,0,0};
+    SGP4ATmega::vector_t zero_vector={0,0,0,0};
+    SGP4ATmega::vector_t pos = zero_vector;
+    SGP4ATmega::vector_t vel = zero_vector;
 
     jul_utc = daynum +723244000000LL;
     jul_epoch=Julian_Date_of_Epoch(t.epoch_year, t.epoch_day);
@@ -805,15 +804,10 @@ PredicThirteen::geodetic_t PredicThirteen::calc(PredicThirteen::tle_t t){
     Convert_Sat_State(&pos, &vel);   
     Magnitude(&vel);        
     printVar("jul_utc", jul_utc);
-    Calculate_LatLonAlt(jul_utc, &pos, &geo);
+    Calculate_LatLonAlt(jul_utc, &pos, geo);
     printVector(&pos);
     printVector(&vel);
-    printGeo(&geo);
-    LAT = geo.lat;
-    LON = geo.lon;
-    Serial.print("LAT: ");
-    Serial.println(LAT);
-    Serial.print("LON: ");
-    Serial.println(LON);
-    return geo;
+    printGeo(geo);
+	geo->lat = Degrees(geo->lat);
+	geo->lon = Degrees(geo->lon);
 }
