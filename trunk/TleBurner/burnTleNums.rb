@@ -154,7 +154,7 @@ class Modeline
    @@PKT = 3
    @@NOR = 0
    @@REV = 1
-   @verbose = true
+   @verbose = false
    attr_accessor :ulLong
    attr_accessor :dlLong
    attr_accessor :dlMode
@@ -173,7 +173,7 @@ class Modeline
        raise ArgumentError.new("this is a sqf comment line")
      else
      parts = sqfLine.chomp.split(',')
-     puts "parts length: #{parts.length}"
+     #puts "parts length: #{parts.length}"
      @satNoradNumber = parts[0].to_i
      @ulLong = parts[1].to_f * 1000#this is wrong order, but it must be wrong in the atmel, too
      @dlLong = parts[2].to_f * 1000
@@ -225,7 +225,7 @@ class Modeline
        modenameOut = @modeName[0..4] + " " * (4 - (@modeName[0..4].length-1))
       incoming = [@satAddress] + modenameOut.split(//).push(@ulLong).push(@dlLong).push(@dlMode).push(@ulMode).push(@polarity).push(@dlShift).push(@ulShift).push(@tone)
       #if @verbose
-         puts incoming.inspect
+         #puts incoming.inspect
      # end
       return incoming.pack("vaaaaaLLcccffS")
    end
@@ -235,7 +235,7 @@ def toHex(str)
    0.upto(str.length - 1) do |i|
       ascii_code = str[i]
       dec_str = ascii_code.to_s
-      puts "%#04x" % dec_str
+      #puts "%#04x" % dec_str
    end
 end
 

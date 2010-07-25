@@ -12,14 +12,17 @@ class TleCollection
   attr_accessor :modelineCount
   #parse the SQF file
   def initialize
-    @verbose = true
+    @verbose = false
     @HEADER_SIZE = 15
     @modelines = Array.new
     @tles = Array.new
     @byteCount = 0
     @numberForBytes = 0
   end
-  def loadFromWeb(sqf_file, verbose)
+  def loadFromWeb(sqf_file ,wxWindowsContext, verbose)
+    if (wxWindowsContext) 
+      progress = Wx::ProgressDialog.new("Getting Fresh TLES",  "0% complete standby...", 4, @frame, Wx::PD_REMAINING_TIME)
+    end
     @modelines = Array.new
     @tles = Array.new
     @byteCount = 0
@@ -30,20 +33,22 @@ class TleCollection
           m = Modeline.new(line)
           @modelines.push(m)
        rescue
-       puts "ERROR: modeline rejected in #{sqf_file}: #{line}"
+       #puts "ERROR: modeline rejected in #{sqf_file}: #{line}"
        end
     end
     #parse the TLE file
     lineCounter = 0
     firstLine = secondLine = ""
     f = Tempfile.new("celes")
+    if (wxWindowsContext) 
+      progress.update(1,"25% complete; getting from web ...")
+      end
     tlesites = ["http://www.celestrak.com/NORAD/elements/amateur.txt","http://www.celestrak.com/NORAD/elements/cubesat.txt", "http://www.celestrak.com/NORAD/elements/noaa.txt"]
     tlesites.each do |tlesite| 
       freshTles = open(tlesite, 'User-Agent' => 'Ruby-Wget').read
-      #if @verbose
-       puts("generated new TLE file: #{f.path()}");
-      #  Wx::log_message(freshTles) 
-      #end
+      if @verbose
+       #puts("generated new TLE file: #{f.path()}");
+      end
       f.puts(freshTles)
     end
     f.close
@@ -52,7 +57,7 @@ class TleCollection
       if line[0].chr == '2' && lineCounter == 2
          t = Tle.new(firstLine,secondLine,line)
          if @verbose
-            Wx::log_message(t.inspect)
+           
          end
          @tles.delete_if {#get rid of previously installed tle if it has the same id
            |tle|
@@ -68,17 +73,17 @@ class TleCollection
          lineCounter = lineCounter + 1
       end
     end
+        if (wxWindowsContext) 
+      progress.update(3,"75% complete")
+      end
     @tles.each_index{|x|
-      #if @verbose
-        Wx::log_message( "satellite #{x} is #{@tles[x].name}")
-       #end
        @modelines.each{|modeline|
           if modeline.satNoradNumber == @tles[x].id
              if @verbose
-               puts "modeline #{modeline.modeName} goes with #{@tles[x].name}"
-                puts "whose address is #{@HEADER_SIZE +(x * Tle.recordSize)}"
-                puts Tle.recordSize
-                puts x
+#               puts "modeline #{modeline.modeName} goes with #{@tles[x].name}"
+#                puts "whose address is #{@HEADER_SIZE +(x * Tle.recordSize)}"
+#                puts Tle.recordSize
+#                puts x
               end
              modeline.satAddress = @HEADER_SIZE + x * Tle.recordSize
              
@@ -86,8 +91,8 @@ class TleCollection
           end
        }
        if @verbose
-          puts @tles[x].name
-          puts @tles[x].bytes
+#          puts @tles[x].name
+#          puts @tles[x].bytes
        end
     }
     #store those that have no modeline so that we can warn about them later
@@ -97,12 +102,16 @@ class TleCollection
 
         #associate all the tles with their modelines
    alignModelines
+       if (wxWindowsContext) 
+      progress.update(4,"100% complete")
+      progress.destroy()
+      end
   end
 
   def alignModelines 
      @tles.each_index{|x|
       if @verbose
-        puts "satellite #{x} is #{@tles[x].name}"
+        #puts "satellite #{x} is #{@tles[x].name}"
       end
        @tles[x].modelines.each{|modeline|
              modeline.satAddress = 15 + x * Tle.recordSize
@@ -133,10 +142,14 @@ class TleCollection
     #otherwise start creating the binary file
     binaryData = String.new
       #first put in two-byte number indicating number of tles
-    puts("numberfor bytes: #{@numberForBytes +1}");
+      if @verbose
+#    puts("numberfor bytes: #{@numberForBytes +1}");
+    end
     binaryData << [@numberForBytes+1].pack("v");
        #next, put in two-byte number indicating number of modelines
-    puts("modelinecount: #{@modelineCount}");
+    if @verbose
+ #     puts("modelinecount: #{@modelineCount}");
+    end
     binaryData << [@modelineCount].pack("v")
   
  
@@ -146,12 +159,12 @@ class TleCollection
     }
     if @verbose
     
-      puts "dumping modelines"
+#      puts "dumping modelines"
     end
     #now add all the modelines
     @tles[0..@numberForBytes].each {|tle|
        if @verbose 
-        puts "dump modelines for #{tle.name}"
+ #       puts "dump modelines for #{tle.name}"
        end
        binaryModelines = tle.dumpModelinesToBinary
        unless binaryModelines == nil

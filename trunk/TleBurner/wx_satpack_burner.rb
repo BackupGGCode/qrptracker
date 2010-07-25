@@ -1,11 +1,14 @@
 #Todo:
 #Make logging window, so that we can get rid of puts statements
 
-
+#ruby gems
+require 'rubygems'
 require 'wx'
 require 'open-uri'
-require 'TleCollection'
 require 'serialport'
+
+#sister files
+require 'TleCollection'
 
 VERSION_NUMBER = 0
 DIALOGS_TLE_FILE_OPEN = 10
@@ -32,10 +35,10 @@ class DragListBox < Wx::ListCtrl
         
         evt_list_begin_drag(get_id)  do | e | 
           on_drag(e) 
-	    puts "dragging"
+	  #  puts "dragging"
           end
           evt_list_begin_rdrag(id) { | event |  
-            puts "rdragging" 
+         #   puts "rdragging" 
 	    }
      
     end
@@ -53,7 +56,7 @@ class DragListBox < Wx::ListCtrl
     def on_drag(event)
         selected_row = get_selected_row
         if(selected_row < 0)
-            puts("nothing to drag")
+          #  puts("nothing to drag")
             return
 	end
         data = Wx::TextDataObject.new(get_item_text(selected_row))
@@ -62,16 +65,16 @@ class DragListBox < Wx::ListCtrl
         result = dragSource.do_drag_drop()
         case result
             when Wx::DRAG_NONE:
-                puts("Drop was rejected")
+          #      puts("Drop was rejected")
             when Wx::DRAG_CANCEL:
-                puts("Drag canceled by user")
+          #      puts("Drag canceled by user")
             when Wx::DRAG_COPY:
-                puts("Copied")
+          #      puts("Copied")
             when Wx::DRAG_MOVE:
-                puts("Moved")
+           #     puts("Moved")
                 delete_item(selected_row)
             else
-                puts("ERROR or Unknown result!")
+           #     puts("ERROR or Unknown result!")
         end
     end
 end
@@ -123,13 +126,13 @@ class DragAndDropListBox < DragListBox
              break
             end
 	rescue
-	    puts "Item #{i} caused problems"
+	#    puts "Item #{i} caused problems"
         end
          end
         p = Wx::Point.new(x,y)
         ar =  hit_test(p)
         if ar[1] == Wx::LIST_HITTEST_ONITEMLABEL && ar[0] > -1
-           puts "Hit item #{ar[0]}"
+         #  puts "Hit item #{ar[0]}"
            insert_item(ar[0], text)
            set_item_text(ar[0], text)
         else  
@@ -142,14 +145,14 @@ class DragAndDropListBox < DragListBox
     def checkBinaryFileSize
 	@myCollection = TleCollection.new
 	self.each do |i|
-	    puts "testing #{get_item_text(i)}"
+	  #  puts "testing #{get_item_text(i)}"
 	    @collection.tles.each_index do |x|
 		if @collection.tles[x].name == get_item_text(i)
-		   puts "adding #{@collection.tles[x].name}"
+		   #puts "adding #{@collection.tles[x].name}"
 		    @myCollection.tles.push(@collection.tles[x].clone)
-		    @myCollection.print
+		   # @myCollection.print
 		    #puts thisTles.inspect
-		    puts "array is now #{@myCollection.tles.length} long"
+		   # puts "array is now #{@myCollection.tles.length} long"
 		    break
 		end
 	    end
@@ -194,12 +197,6 @@ class MyFrame < Wx::Frame
         "Drag satellite names from the left list to the right.\n" +
         "You may rearrange the items in the right list or delete them\n" +
          " by double-clicking. The order of the left list sets priority")
-    @textctrl = Wx::TextCtrl.new( self, 
-                                 # :text => 'I should be logger', 
-                                  :style => Wx::TE_MULTILINE|Wx::SUNKEN_BORDER)
-    # set our text control as the log target
-    logWindow = Wx::LogTextCtrl.new(@textctrl)
-    Wx::Log::active_target = logWindow
 
     main_sizer = Wx::BoxSizer.new(Wx::VERTICAL)
     main_sizer.add(instructions, 0, Wx::EXPAND)
@@ -214,8 +211,9 @@ end
 
 class DragDropApp < Wx::App
   def on_init
-	@tle_file = @doppler_file = @modeline_file = @tones_file = ""
+	@tle_file = @doppler_file = @modeline_file = @tones_file = @collection = ""
 	@eeprom_size = 1024
+	@eeprom_load_method = "avrdude"
 	@longitude = 0
 	@lat = 0
 	@altitude = 0
@@ -223,9 +221,9 @@ class DragDropApp < Wx::App
 	@last_time_sync = 0
 	@kep_uri = 'http://www.amsat.org/amsat/ftp/keps/current/nasabare.txt_bad'
 	get_config()
-	@collection = TleCollection.new
-    @collection.loadFromWeb(@modeline_file, true)
-    puts @collection.inspect
+	#@collection = TleCollection.new
+   # @collection.loadFromWeb(@modeline_file, true)
+    #puts @collection.inspect
     @frame = MyFrame.new("Satpack Burner", @collection,@eeprom_size)
         file_menu = Wx::Menu.new
         settings_menu = Wx::Menu.new
@@ -284,7 +282,7 @@ class DragDropApp < Wx::App
 	#test_for_avrdude
     end
     def on_load_tles
-      @collection.loadFromWeb(@modeline_file, true)
+      @collection.loadFromWeb(@modeline_file, @frame, false)
       end
   def on_quit
 	  on_save
@@ -292,65 +290,164 @@ class DragDropApp < Wx::App
   end
   
   def on_burn_time
+  #  Wx::WindowDisabler.disable(@frame) do
+    #  info = Wx::BusyInfo.busy("Setting time ...", @frame) do
+        
     #send 14-char time to serial port
+    data_bits = 8
+    stop_bits = 1
+    parity = SerialPort::NONE
+   # if test_commport(@commport) == false
+   #   return
+   # end
+    #dlg = Wx::MessageDialog.new(@frame, "Storing the current date and time to satpack", "Notification", @frame, Wx::PD_AUTO_HIDE)
+	#      dlg.show_modal()
+    sp = SerialPort.new(@commport, 57600, data_bits, stop_bits, parity)
+    sp.flow_control = SerialPort::NONE
+    sp.read_timeout = 0
+    sp.write_timeout = 0
+    #apparently, once we open the port, we need wait a bit before we sent the character that
+    #gets things going.
+    sleep(3)
+       sp.write('0')
+  #puts "sleeping"
+  sleep(5)  
+   sp.write('C');
+   # puts "writing time"
+    timeString = Time.now.getgm.strftime("%y%m%d0%w%H%M%S")
+    if timeString.length != 14 
+      puts "WARNING: timestring is wrong length!!!"
+    end
+    sp.write(timeString)
+  #  puts "finished writing time"
+    c = ''
+    while (c != 84 && c != 70 ) #T and F
+       c = sp.getc
+       #puts c
+    end
+    if c == 70
+      puts "Error: time handshake was not good"
+      Process.exit
+    end
+   # puts "Time Handshake good. Closing comm port"
+    sp.close 
+   # end #end busy
+   # end #end busy 
+  end
+  
+  def burn_tles
+    if @eeprom_load_method == "avrdude"
+      burn_tles_avrdude
+    elsif @eeprom_load_method == "serial"
+      burn_tles_serial
+    end
+  end
+  
+  def burn_tles_serial
+    #send tles to serial port without avrdude, because the bootloader is broken
+    #on m644p's
+    
     data_bits = 8
     stop_bits = 1
     parity = SerialPort::NONE
     if test_commport(@commport) == false
       return
     end
-   # dlg = Wx::MessageDialog.new(@frame, "Storing the current date and time to satpack", "Notification", @frame, Wx::PD_AUTO_HIDE)
-	#      dlg.show_modal()
-    sp = SerialPort.new(@commport, 115200, data_bits, stop_bits, parity)
+    #Wx::WindowDisabler.disable(@frame) do
+    #  info = Wx::BusyInfo.busy("Loading tles ...", @frame) do
+        
+
+
+progress = Wx::ProgressDialog.new("Loading TLES",  "0% complete standby...", 49, @frame, Wx::PD_REMAINING_TIME)
+    
+    sp = SerialPort.new(@commport, 57600, data_bits, stop_bits, parity)
     sp.flow_control = SerialPort::NONE
     sp.read_timeout = 0
     sp.write_timeout = 0
+    #startup
+    sleep(5)
+    sp.putc('0')
+    #wait
+    sleep(5)
     #If this really is a qrpTracker, we expect the string 'QRPT'
     #TODO timeout this
-    stringIn = ""
-    while (stringIn[-4,4] != "QRPT")
-       c = sp.getc
-       puts c
-       #Windows sends nils when it feels grumpy. So we'll just ignore them
-       if c != nil
-          stringIn << c
-          puts stringIn
-       end
-    end
-
-    #if we get something other than the magic word, we'd better get lost
-    unless stringIn[-4,4] == "QRPT"
-       puts "Error: didn't get proper response from chip.\nExpected 'QRPT', got #{stringIn}"
-       Process.exit
-    end
+           stringIn = ""
+#   while (stringIn[-4,4] != "QRPT")
+#      c = sp.getc
+#      puts c
+#       #Windows sends nils when it feels grumpy. So we'll just ignore them
+#       if c != nil
+#          stringIn << c
+#          puts stringIn
+#       end
+#    end
+#
+#    #if we get something other than the magic word, we'd better get lost
+#    unless stringIn[-4,4] == "QRPT"
+#       puts "Error: didn't get proper response from chip.\nExpected 'QRPT', got #{stringIn}"
+#       Process.exit
+#    end
 
     #tell the qrpTracker to 'Receive' the TLEs and modelines
-    puts "writing R"
-    sp.write('R')
+  #  puts "writing W"
+    sp.write('W')
 
+ 
 
-    puts "writing time"
-    #sp.write("FOO BAR THE BAR BAZ BOO")
-    timeString = Time.now.getgm.strftime("%y%m%d0%w%H%M%S")
-    if timeString.length != 14 
-      puts "WARNING: timestring is wrong length!!!"
-    end
-    sp.write(timeString)
-    puts "finished writing time"
-    while (c != 84 && c != 70 ) #T and F
-       c = sp.getc
-       puts c
-    end
-    if c == 70
-      puts "Error: time handshake was not good"
-      Process.exit
-    end
-    puts "Time Handshake good. Closing comm port"
+    #if we're still around, we want to send the binary data a byte at a time
+    #then we read a byte, to make sure the proper one was transmitted
+    #this isn't as slow as it seems because many data storage devices 
+    #need a longish delay to do their writing anyway.
+    x = 0
+    #set up a value for hash marks
+    binaryData = String.new
+    binaryData << [VERSION_NUMBER].pack("c");
+    binaryData << [@lat,@longitude,@altitude].pack("ffS");
+    binaryData << @frame.list2.myCollection.binaryDump;
+    twoPercent = binaryData.length / 50
+    #send a byte at a time
+    count = 0
+    binaryData.each_byte{|bite|
+       sp.putc(bite)
+       #puts("sending byte")
+       byteIn = sp.getc
+       #ignore nil, which is windows' way of saying it hasn't got anything, I guess
+       while (byteIn == nil)
+          byteIn = sp.getc
+       end
+       #if we've got here, we have a good byte in
+       #so, we'll add one to the counter of bytes in
+       x = x +1
+       #if the number of bytes in is over the 2% mark, output another hash
+       #that way, the work will be done when 49 of these appear
+       #it just gives the user something to look at as the data transfers
+       if (x > twoPercent)
+       #Wx::get_app.yield()
+          progress.update(count,(count * 2).to_s + "% complete");
+         # print "\#"
+          x = 0
+         count = count + 1 
+       end
+       #if the input is different from the output, we've got a problem
+       if byteIn != bite
+          puts "Error: did not get byte back that I expected"
+          puts "Sent #{bite} got #{byteIn}"
+          sp.close
+          Process.exit
+       end
+    }
+    #our work is done here.
     sp.close
-    
+   # puts
+   # puts "Tles and modelines successfully transferred"
+       #   end #end alert
+	#end
+	progress.update(50, "Now burning date and time ...");
+    on_burn_time
+    progress.destroy()
   end
   
-  def burn_tles
+  def burn_tles_avrdude
        unless test_commport(@commport)
 	   return
        end
@@ -359,7 +456,6 @@ class DragDropApp < Wx::App
        end
      #  f = Tempfile.new("tle_binary")
        #@frame.list2.myCollection.print
-      #Wx::log_message( "binary file is: #{f.inspect}")
      #  f.print(@frame.list2.myCollection.binaryDump)
        foo = File.open("burner.bin", "wb")
        #the first thing on the file is the version number
@@ -369,18 +465,30 @@ class DragDropApp < Wx::App
        foo.print([@lat,@longitude,@altitude].pack("ffS"));
        #then we put the keps and modelines
        foo.print(@frame.list2.myCollection.binaryDump)
-       
        foo.close
+       reset_arduino
        commandLine = "avrdude -c arduino -b 57600 -p m328p -P #{@commport} -U eeprom:w:burner.bin:r"
-       #Wx::log_message("\n\nRunning the following command:\n" + commandLine)
        `#{commandLine}`.each {|line|
-	  # Wx::log_message(line)
 	   }
        #unless system(commandLine)
 	#   dlg = Wx::MessageDialog.new(@frame, "Unable to burn the eeprom using #{commandLine} Please double-check comm port and chip type", "Notification", Wx::OK | Wx::ICON_INFORMATION)
         #dlg.show_modal()
 	  #end
   end
+  
+  def reset_arduino
+      # the Arduino ide bumps the rts line like this before it calls
+      # avrdude. We need to emulate this behaviour
+      # recent versions of avrdude provide this in the config file, but 
+      # we'd then need to provide a custom config, and that sounds ugly.
+     sp = SerialPort.new(@commport, 57600)
+     sp.rts = 1
+     sleep 0.1
+     sp.rts = 0
+     sp.close
+     sleep 0.1
+  end
+      
   def test_for_avrdude
 	  unless system("avrdude")#should return true, but quite verbose
 	      dlg = Wx::MessageDialog.new(@frame, "Unable to access avrdude. Please install Arduino environment.", "Notification", Wx::OK | Wx::ICON_INFORMATION)
@@ -412,6 +520,7 @@ class DragDropApp < Wx::App
 	  @modeline_file = @configuration["modeline_file"]
 	  @tones_file = @configuration["tones_file"]
 	  @eeprom_size = @configuration["eeprom_size"]
+	  @eeprom_load_method = @configuration["eeprom_load_method"]
 	  @lat = @configuration["lat"]
 	  @longitude = @configuration["longitude"]
 	  @commport = @configuration["commport"]
@@ -432,21 +541,40 @@ class DragDropApp < Wx::App
 	@frame.list2.each do |i|
           satellites.push(@frame.list2.get_item_text(i))
   end
-         @configuration = {'collection' => @collection, 'satellites' => satellites,  'doppler_file' => @doppler_file, 'modeline_file' => @modeline_file, 'eeprom_size'=> @eeprom_size, 'longitude' => @longitude, 'lat' => @lat, 'altitude' => @altitude, 'commport' => @commport}
+         @configuration = {'collection' => @collection, 'satellites' => satellites,  'doppler_file' => @doppler_file, 'modeline_file' => @modeline_file, 'eeprom_size'=> @eeprom_size, 'eeprom_load_method'=> @eeprom_load_method, 'longitude' => @longitude, 'lat' => @lat, 'altitude' => @altitude, 'commport' => @commport}
 	
 	open('text.cfg', 'w') { |f| YAML.dump(@configuration, f) }
 
   end
-  def on_set_eeprom_size
-      dlg = Wx::SingleChoiceDialog.new(@frame, "Test Single Choice", "Select EEPROM Size In Bytes", 
-                                            %w(1024 2048))
+  
+def parse_eeprom_size(description)
+             
+            if description == "Atmega328"
+              @eeprom_size = 1024
+              @eeprom_load_method = "avrdude"
+            elsif description == "Atmega644"
+              @eeprom_size = 2048
+              @eeprom_load_method = "serial"
+            elsif description == "AT90USB1286"
+               @eeprom_size = 4096
+               @eeprom_load_method = "serial"
+            else
+              puts "Error: got impossible value for chip selection: #{dlg.get_string_selection()}"
+               Process.exit
+             end
+  end
+  
+def on_set_eeprom_size
+      dlg = Wx::SingleChoiceDialog.new(@frame, "Test Single Choice", "Select Chip", 
+                                            ["Atmega328", "Atmega644", "AT90USB1286"])
                                             #Wx::CHOICEDLG_STYLE)
         if dlg.show_modal() == Wx::ID_OK
-            @eeprom_size = dlg.get_string_selection().to_i
+            parse_eeprom_size(dlg.get_string_selection())
         end
         dlg.destroy()
         return nil
   end
+
   def on_set_lat
        dlg = Wx::TextEntryDialog.new(@frame, "Observer Decimal Latitude N", "", @lat.to_s)
         dlg.set_value(@lat.to_s)
